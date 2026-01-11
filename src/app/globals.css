@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+/* One Option Store - B&W Only Design System */
+/* Product images are the ONLY color allowed */
+
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+  --border-light: #e5e5e5;
+  --border-dark: #333333;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border-light: var(--border-light);
+  --color-border-dark: var(--border-dark);
+  --font-serif: var(--font-playfair);
+  --font-sans: var(--font-dm-sans);
+}
+
+/* No dark mode - always B&W */
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Headlines use Playfair Display */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+/* Utility classes for the B&W design */
+.font-serif {
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+.font-sans {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
