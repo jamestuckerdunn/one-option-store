@@ -259,6 +259,9 @@ async function seedFromScrapedData() {
       console.log(`  + Created department: ${dept.name}`);
     }
 
+    // TypeScript guard - dbDept is guaranteed to exist at this point
+    if (!dbDept) continue;
+
     // Get or create main category
     let { data: mainCat } = await supabase
       .from('categories')
@@ -287,6 +290,9 @@ async function seedFromScrapedData() {
       mainCat = newCat;
       console.log(`  + Created main category`);
     }
+
+    // TypeScript guard - mainCat is guaranteed to exist at this point
+    if (!mainCat) continue;
 
     // Insert subcategories
     let catCount = 0;
