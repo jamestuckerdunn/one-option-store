@@ -5,6 +5,9 @@ import ProductHero from '@/components/products/ProductHero';
 import ProductCard from '@/components/products/ProductCard';
 import Link from 'next/link';
 
+// Disable caching to always fetch fresh data from database
+export const revalidate = 0;
+
 interface ProductData {
   id: string;
   asin: string;
