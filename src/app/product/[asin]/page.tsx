@@ -1,94 +1,25 @@
-import { createServerClient } from '@/lib/supabase/server';
+import { getProductWithCategories } from '@/lib/db';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 interface Props {
   params: Promise<{ asin: string }>;
 }
 
-interface CategoryData {
-  id: string;
-  name: string;
-  slug: string;
-  full_slug: string;
-  departments: {
-    name: string;
-    slug: string;
-  } | null;
-}
-
-interface RankingData {
-  id: string;
-  is_current: boolean;
-  became_number_one_at: string;
-  categories: CategoryData | null;
-}
-
-interface ProductData {
-  id: string;
-  asin: string;
-  name: string;
-  price: number | null;
-  image_url: string | null;
-  amazon_url: string;
-  rating: number | null;
-  review_count: number | null;
-  bestseller_rankings: RankingData[];
-}
-
-async function getProductData(asin: string): Promise<ProductData | null> {
-  const supabase = createServerClient();
-
-  const { data, error } = await supabase
-    .from('products')
-    .select(`
-      id,
-      asin,
-      name,
-      price,
-      image_url,
-      amazon_url,
-      rating,
-      review_count,
-      bestseller_rankings (
-        id,
-        is_current,
-        became_number_one_at,
-        categories (
-          id,
-          name,
-          slug,
-          full_slug,
-          departments (
-            name,
-            slug
-          )
-        )
-      )
-    `)
-    .eq('asin', asin)
-    .single();
-
-  if (error || !data) {
-    return null;
-  }
-
-  return data as unknown as ProductData;
-}
-
 export default async function ProductPage({ params }: Props) {
   const { asin } = await params;
-  const product = await getProductData(asin);
+  const product = await getProductWithCategories(asin);
 
   if (!product) {
     notFound();
   }
 
-  // Get current rankings (categories where this is #1)
-  const currentRankings = product.bestseller_rankings?.filter((r) => r.is_current) || [];
+  const categories = product.categories || [];
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">
@@ -112,7 +43,6 @@ export default async function ProductPage({ params }: Props) {
 
         {/* Product Details */}
         <section className="relative overflow-hidden py-12 lg:py-20">
-          {/* Subtle background */}
           <div className="absolute inset-0 bg-gradient-to-b from-gray-50 via-white to-white" />
           <div className="absolute inset-0 opacity-[0.02]" style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, black 1px, transparent 0)`,
@@ -141,7 +71,6 @@ export default async function ProductPage({ params }: Props) {
                     </div>
                   )}
                 </div>
-                {/* Decorative elements */}
                 <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-gray-100 rounded-full -z-10" />
                 <div className="absolute -top-4 -left-4 w-16 h-16 bg-gray-50 rounded-full -z-10" />
               </div>
@@ -149,18 +78,18 @@ export default async function ProductPage({ params }: Props) {
               {/* Product Info */}
               <div className="flex flex-col">
                 {/* Category Badges */}
-                {currentRankings.length > 0 && (
+                {categories.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-6">
-                    {currentRankings.map((ranking) => (
+                    {categories.map((cat) => (
                       <Link
-                        key={ranking.id}
-                        href={`/category/${ranking.categories?.full_slug}`}
+                        key={cat.id}
+                        href={`/category/${cat.full_slug}`}
                         className="badge-pulse inline-flex items-center gap-2 bg-black text-white px-4 py-2 text-xs font-sans font-semibold uppercase tracking-wider rounded-full shadow-lg hover:bg-gray-800 transition-colors"
                       >
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                         </svg>
-                        #1 in {ranking.categories?.name}
+                        #1 in {cat.name}
                       </Link>
                     ))}
                   </div>

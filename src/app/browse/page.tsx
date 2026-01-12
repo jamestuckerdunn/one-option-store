@@ -1,27 +1,18 @@
-import { createServerClient } from '@/lib/supabase/server';
+import { getDepartments, type Department } from '@/lib/db';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
-import type { Department } from '@/lib/supabase/types';
 
-async function getDepartments() {
-  const supabase = createServerClient();
-
-  const { data, error } = await supabase
-    .from('departments')
-    .select('*')
-    .order('name');
-
-  if (error) {
-    console.error('Error fetching departments:', error);
-    return [] as Department[];
-  }
-
-  return data || ([] as Department[]);
-}
+export const dynamic = 'force-dynamic';
 
 export default async function BrowsePage() {
-  const departments = await getDepartments();
+  let departments: Department[] = [];
+
+  try {
+    departments = await getDepartments();
+  } catch (error) {
+    console.error('Error fetching departments:', error);
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">
@@ -30,7 +21,6 @@ export default async function BrowsePage() {
       <main className="flex-1">
         {/* Page Header */}
         <section className="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white border-b border-gray-100">
-          {/* Background pattern */}
           <div className="absolute inset-0 opacity-[0.02]" style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, black 1px, transparent 0)`,
             backgroundSize: '40px 40px'

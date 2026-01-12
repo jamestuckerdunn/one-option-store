@@ -1,104 +1,25 @@
-import { createServerClient } from '@/lib/supabase/server';
+import { getDepartmentBySlug, getCategoriesWithProductsByDepartment } from '@/lib/db';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ProductCard from '@/components/products/ProductCard';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
-interface ProductData {
-  asin: string;
-  name: string;
-  price: number | null;
-  image_url: string | null;
-  rating: number | null;
-  review_count: number | null;
-}
-
-interface CategoryWithRankings {
-  id: string;
-  name: string;
-  slug: string;
-  full_slug: string;
-  depth: number;
-  bestseller_rankings: Array<{
-    id: string;
-    products: ProductData | null;
-  }>;
-}
-
-interface DepartmentData {
-  id: string;
-  name: string;
-  slug: string;
-}
-
-async function getDepartmentData(slug: string) {
-  const supabase = createServerClient();
-
-  // Get department
-  const { data: deptData, error: deptError } = await supabase
-    .from('departments')
-    .select('id, name, slug')
-    .eq('slug', slug)
-    .single();
-
-  if (deptError || !deptData) {
-    return null;
-  }
-
-  const department = deptData as DepartmentData;
-
-  // Get categories with their bestseller products
-  const { data: catData, error: catError } = await supabase
-    .from('categories')
-    .select(`
-      id,
-      name,
-      slug,
-      full_slug,
-      depth,
-      bestseller_rankings (
-        id,
-        products (
-          asin,
-          name,
-          price,
-          image_url,
-          rating,
-          review_count
-        )
-      )
-    `)
-    .eq('department_id', department.id)
-    .order('name');
-
-  if (catError) {
-    console.error('Error fetching categories:', catError);
-  }
-
-  const categories = (catData || []) as unknown as CategoryWithRankings[];
-
-  return {
-    department,
-    categories,
-  };
-}
-
 export default async function DepartmentPage({ params }: Props) {
   const { slug } = await params;
-  const data = await getDepartmentData(slug);
 
-  if (!data) {
+  const department = await getDepartmentBySlug(slug);
+  if (!department) {
     notFound();
   }
 
-  const { department, categories } = data;
-
-  // Separate main category from subcategories
+  const categories = await getCategoriesWithProductsByDepartment(department.id);
   const mainCategory = categories.find((c) => c.depth === 0);
   const subcategories = categories.filter((c) => c.depth === 1);
 
@@ -145,8 +66,8 @@ export default async function DepartmentPage({ params }: Props) {
           </div>
         </section>
 
-        {/* Featured Product (if main category has one) */}
-        {mainCategory?.bestseller_rankings?.[0]?.products && (
+        {/* Featured Product */}
+        {mainCategory?.product && (
           <section className="py-12 lg:py-16 bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center gap-3 mb-8">
@@ -162,12 +83,12 @@ export default async function DepartmentPage({ params }: Props) {
               </div>
               <div className="max-w-sm">
                 <ProductCard
-                  asin={mainCategory.bestseller_rankings[0].products.asin}
-                  name={mainCategory.bestseller_rankings[0].products.name}
-                  price={mainCategory.bestseller_rankings[0].products.price}
-                  imageUrl={mainCategory.bestseller_rankings[0].products.image_url}
-                  rating={mainCategory.bestseller_rankings[0].products.rating}
-                  reviewCount={mainCategory.bestseller_rankings[0].products.review_count}
+                  asin={mainCategory.product.asin}
+                  name={mainCategory.product.name}
+                  price={mainCategory.product.price}
+                  imageUrl={mainCategory.product.image_url}
+                  rating={mainCategory.product.rating}
+                  reviewCount={mainCategory.product.review_count}
                   categoryName={department.name}
                 />
               </div>
@@ -175,7 +96,7 @@ export default async function DepartmentPage({ params }: Props) {
           </section>
         )}
 
-        {/* Subcategories List */}
+        {/* Subcategories */}
         <section className="py-12 lg:py-16 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="font-serif text-2xl sm:text-3xl font-bold mb-8">
@@ -194,9 +115,9 @@ export default async function DepartmentPage({ params }: Props) {
                     <h3 className="font-serif text-lg font-bold mb-2 group-hover:text-gray-600 transition-colors">
                       {category.name}
                     </h3>
-                    {category.bestseller_rankings?.[0]?.products ? (
+                    {category.product ? (
                       <p className="font-sans text-sm text-gray-500 line-clamp-2">
-                        #1: {category.bestseller_rankings[0].products.name}
+                        #1: {category.product.name}
                       </p>
                     ) : (
                       <p className="font-sans text-sm text-gray-400">

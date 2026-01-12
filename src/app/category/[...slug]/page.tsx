@@ -1,92 +1,33 @@
-import { createServerClient } from '@/lib/supabase/server';
+import { getCategoryByFullSlug, getBestsellerForCategory, getDepartmentBySlug } from '@/lib/db';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ProductHero from '@/components/products/ProductHero';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 interface Props {
   params: Promise<{ slug: string[] }>;
 }
 
-interface ProductData {
-  id: string;
-  asin: string;
-  name: string;
-  price: number | null;
-  image_url: string | null;
-  amazon_url: string;
-  rating: number | null;
-  review_count: number | null;
-}
-
-interface CategoryData {
-  id: string;
-  name: string;
-  slug: string;
-  full_slug: string;
-  amazon_url: string | null;
-  departments: {
-    id: string;
-    name: string;
-    slug: string;
-  } | null;
-  bestseller_rankings: Array<{
-    id: string;
-    products: ProductData | null;
-  }>;
-}
-
-async function getCategoryData(slugParts: string[]): Promise<CategoryData | null> {
-  const supabase = createServerClient();
-  const fullSlug = slugParts.join('/');
-
-  const { data, error } = await supabase
-    .from('categories')
-    .select(`
-      id,
-      name,
-      slug,
-      full_slug,
-      amazon_url,
-      departments (
-        id,
-        name,
-        slug
-      ),
-      bestseller_rankings (
-        id,
-        products (
-          id,
-          asin,
-          name,
-          price,
-          image_url,
-          amazon_url,
-          rating,
-          review_count
-        )
-      )
-    `)
-    .eq('full_slug', fullSlug)
-    .single();
-
-  if (error || !data) {
-    return null;
-  }
-
-  return data as unknown as CategoryData;
-}
-
 export default async function CategoryPage({ params }: Props) {
   const { slug } = await params;
-  const category = await getCategoryData(slug);
+  const fullSlug = slug.join('/');
 
+  const category = await getCategoryByFullSlug(fullSlug);
   if (!category) {
     notFound();
   }
 
-  const product = category.bestseller_rankings?.[0]?.products;
+  const product = await getBestsellerForCategory(category.id);
+
+  // Get department for breadcrumb
+  let department = null;
+  if (category.department_id) {
+    const deptSlug = slug[0];
+    department = await getDepartmentBySlug(deptSlug);
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">
@@ -106,16 +47,16 @@ export default async function CategoryPage({ params }: Props) {
               <Link href="/browse" className="hover:text-black transition-colors">
                 Browse
               </Link>
-              {category.departments && (
+              {department && (
                 <>
                   <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                   <Link
-                    href={`/department/${category.departments.slug}`}
+                    href={`/department/${department.slug}`}
                     className="hover:text-black transition-colors"
                   >
-                    {category.departments.name}
+                    {department.name}
                   </Link>
                 </>
               )}
