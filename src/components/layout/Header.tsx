@@ -4,28 +4,27 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
 export default function Header() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
   return (
     <header
       className={`sticky top-0 z-50 transition-all duration-500 ${
-        scrolled
+        isScrolled
           ? 'bg-white/95 backdrop-blur-xl shadow-lg shadow-black/5'
           : 'bg-white'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20 lg:h-24">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
             <div className="relative">
               <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -43,7 +42,6 @@ export default function Header() {
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-2">
             <Link
               href="/browse"
@@ -73,25 +71,23 @@ export default function Header() {
             </a>
           </nav>
 
-          {/* Mobile menu button */}
           <button
             type="button"
             className="md:hidden p-3 -mr-2 rounded-xl hover:bg-gray-100 transition-colors"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle menu"
           >
             <div className="w-6 h-6 flex flex-col items-center justify-center gap-1.5">
-              <span className={`w-6 h-0.5 bg-black transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
-              <span className={`w-6 h-0.5 bg-black transition-all duration-300 ${mobileMenuOpen ? 'opacity-0 scale-x-0' : ''}`} />
-              <span className={`w-6 h-0.5 bg-black transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+              <span className={`w-6 h-0.5 bg-black transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+              <span className={`w-6 h-0.5 bg-black transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0 scale-x-0' : ''}`} />
+              <span className={`w-6 h-0.5 bg-black transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
             </div>
           </button>
         </div>
 
-        {/* Mobile Navigation */}
         <div
           className={`md:hidden overflow-hidden transition-all duration-500 ease-out ${
-            mobileMenuOpen ? 'max-h-72 pb-6 opacity-100' : 'max-h-0 opacity-0'
+            isMobileMenuOpen ? 'max-h-72 pb-6 opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
           <nav className="pt-4 border-t border-gray-100">
@@ -99,7 +95,7 @@ export default function Header() {
               <Link
                 href="/browse"
                 className="font-sans text-lg font-medium py-4 px-5 rounded-2xl hover:bg-gray-50 transition-all duration-300 flex items-center justify-between group"
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={closeMobileMenu}
               >
                 Browse Departments
                 <svg className="w-5 h-5 text-gray-400 group-hover:text-black group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -109,7 +105,7 @@ export default function Header() {
               <Link
                 href="/about"
                 className="font-sans text-lg font-medium py-4 px-5 rounded-2xl hover:bg-gray-50 transition-all duration-300 flex items-center justify-between group"
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={closeMobileMenu}
               >
                 About Us
                 <svg className="w-5 h-5 text-gray-400 group-hover:text-black group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -121,7 +117,7 @@ export default function Header() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2 py-4 px-5 bg-black text-white font-sans text-lg font-semibold rounded-2xl hover:bg-gray-800 transition-all duration-300 flex items-center justify-center gap-2"
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={closeMobileMenu}
               >
                 Shop on Amazon
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
