@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
+const AMAZON_URL = process.env.NEXT_PUBLIC_AMAZON_URL || 'https://amazon.com';
+
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -59,7 +61,7 @@ export default function Header() {
             </Link>
             <div className="w-px h-6 bg-gray-200 mx-2" />
             <a
-              href="https://amazon.com"
+              href={AMAZON_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="px-5 py-2.5 bg-black text-white font-sans text-sm font-semibold rounded-xl hover:bg-gray-800 transition-all duration-300 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5 flex items-center gap-2"
@@ -113,7 +115,7 @@ export default function Header() {
                 </svg>
               </Link>
               <a
-                href="https://amazon.com"
+                href={AMAZON_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2 py-4 px-5 bg-black text-white font-sans text-lg font-semibold rounded-2xl hover:bg-gray-800 transition-all duration-300 flex items-center justify-center gap-2"

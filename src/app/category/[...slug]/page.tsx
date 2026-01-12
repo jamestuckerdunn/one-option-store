@@ -1,17 +1,62 @@
+import { Metadata } from 'next';
 import { getCategoryByFullSlug, getBestsellerForCategory, getDepartmentBySlug } from '@/lib/db';
 import PageLayout from '@/components/layout/PageLayout';
 import ProductHero from '@/components/products/ProductHero';
 import { Breadcrumb, ClockIcon, ExternalLinkIcon } from '@/components/ui';
 import { notFound } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Revalidate every hour
 
 interface CategoryPageProps {
   params: Promise<{ slug: string[] }>;
 }
 
+function isValidSlugSegment(segment: string): boolean {
+  return /^[a-z0-9-]+$/i.test(segment) && segment.length <= 100;
+}
+
+function isValidSlugArray(slugArray: string[]): boolean {
+  return slugArray.length > 0 && slugArray.length <= 10 && slugArray.every(isValidSlugSegment);
+}
+
+export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+  const { slug } = await params;
+
+  if (!isValidSlugArray(slug)) {
+    return { title: 'Category Not Found | One Option Store' };
+  }
+
+  const fullSlug = slug.join('/');
+  const category = await getCategoryByFullSlug(fullSlug);
+
+  if (!category) {
+    return { title: 'Category Not Found | One Option Store' };
+  }
+
+  const product = await getBestsellerForCategory(category.id);
+
+  return {
+    title: `${category.name} | #1 Bestseller | One Option Store`,
+    description: product
+      ? `${product.name} - The #1 bestselling product in ${category.name}. ${product.price ? `Only $${product.price.toFixed(2)}` : ''}`
+      : `Discover the #1 bestselling product in ${category.name} on Amazon.`,
+    openGraph: {
+      title: `${category.name} | #1 Bestseller`,
+      description: product
+        ? `${product.name} - The #1 bestseller in ${category.name}.`
+        : `Find the top-ranked product in ${category.name}.`,
+      images: product?.image_url ? [{ url: product.image_url, alt: product.name }] : [],
+    },
+  };
+}
+
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
+
+  if (!isValidSlugArray(slug)) {
+    notFound();
+  }
+
   const fullSlug = slug.join('/');
 
   const category = await getCategoryByFullSlug(fullSlug);

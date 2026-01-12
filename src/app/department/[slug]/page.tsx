@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import { getDepartmentBySlug, getCategoriesWithProductsByDepartment } from '@/lib/db';
 import PageLayout from '@/components/layout/PageLayout';
 import ProductCard from '@/components/products/ProductCard';
@@ -5,14 +6,45 @@ import { Breadcrumb, ChevronRightIcon, CheckCircleIcon } from '@/components/ui';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Revalidate every hour
 
 interface DepartmentPageProps {
   params: Promise<{ slug: string }>;
 }
 
+function isValidSlug(slug: string): boolean {
+  return /^[a-z0-9-]+$/i.test(slug) && slug.length <= 100;
+}
+
+export async function generateMetadata({ params }: DepartmentPageProps): Promise<Metadata> {
+  const { slug } = await params;
+
+  if (!isValidSlug(slug)) {
+    return { title: 'Department Not Found | One Option Store' };
+  }
+
+  const department = await getDepartmentBySlug(slug);
+
+  if (!department) {
+    return { title: 'Department Not Found | One Option Store' };
+  }
+
+  return {
+    title: `${department.name} | #1 Bestsellers | One Option Store`,
+    description: `Discover the #1 bestselling products in ${department.name}. We show you only the top-ranked items in every category.`,
+    openGraph: {
+      title: `${department.name} | #1 Bestsellers`,
+      description: `Browse the #1 bestselling products in ${department.name}.`,
+    },
+  };
+}
+
 export default async function DepartmentPage({ params }: DepartmentPageProps) {
   const { slug } = await params;
+
+  if (!isValidSlug(slug)) {
+    notFound();
+  }
 
   const department = await getDepartmentBySlug(slug);
   if (!department) {

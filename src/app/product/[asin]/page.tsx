@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import { getProductWithCategories } from '@/lib/db';
 import PageLayout from '@/components/layout/PageLayout';
 import Image from 'next/image';
@@ -13,14 +14,49 @@ import {
   ClockIcon,
 } from '@/components/ui';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Revalidate every hour
 
 interface ProductPageProps {
   params: Promise<{ asin: string }>;
 }
 
+function isValidAsin(asin: string): boolean {
+  return /^[A-Z0-9]{10}$/i.test(asin);
+}
+
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { asin } = await params;
+
+  if (!isValidAsin(asin)) {
+    return { title: 'Product Not Found | One Option Store' };
+  }
+
+  const product = await getProductWithCategories(asin);
+
+  if (!product) {
+    return { title: 'Product Not Found | One Option Store' };
+  }
+
+  const categoryNames = product.categories?.map((c) => c.name).join(', ') || 'Top Category';
+
+  return {
+    title: `${product.name} | #1 Bestseller | One Option Store`,
+    description: `${product.name} - The #1 bestselling product in ${categoryNames}. ${product.price ? `Only $${product.price.toFixed(2)}` : ''} with ${product.review_count?.toLocaleString() || 'thousands of'} reviews.`,
+    openGraph: {
+      title: `${product.name} | #1 Bestseller`,
+      description: `The #1 bestselling product in ${categoryNames} on Amazon.`,
+      images: product.image_url ? [{ url: product.image_url, alt: product.name }] : [],
+    },
+  };
+}
+
 export default async function ProductPage({ params }: ProductPageProps) {
   const { asin } = await params;
+
+  if (!isValidAsin(asin)) {
+    notFound();
+  }
+
   const product = await getProductWithCategories(asin);
 
   if (!product) {
