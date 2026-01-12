@@ -3,8 +3,8 @@ import { StarRating } from '@/components/ui/StarRating';
 
 describe('StarRating', () => {
   it('renders five stars', () => {
-    render(<StarRating rating={3} />);
-    const stars = screen.getAllByRole('img', { hidden: true });
+    const { container } = render(<StarRating rating={3} />);
+    const stars = container.querySelectorAll('svg');
     expect(stars).toHaveLength(5);
   });
 
