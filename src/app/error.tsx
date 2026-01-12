@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import PageLayout from '@/components/layout/PageLayout';
 
 interface ErrorPageProps {
@@ -42,12 +43,12 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
             >
               Try Again
             </button>
-            <a
+            <Link
               href="/"
               className="inline-flex items-center justify-center px-8 py-4 bg-white border-2 border-gray-200 text-gray-900 font-sans text-sm font-semibold rounded-xl hover:border-black transition-all duration-200"
             >
               Go Home
-            </a>
+            </Link>
           </div>
         </div>
       </section>
