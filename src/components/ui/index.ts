@@ -1,4 +1,5 @@
 export { StarRating } from './StarRating';
+export { Breadcrumb } from './Breadcrumb';
 export {
   ChevronRightIcon,
   ArrowRightIcon,
