@@ -1,88 +1,24 @@
-import { createServerClient } from '@/lib/supabase/server';
+import { getCurrentBestsellers } from '@/lib/db';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ProductHero from '@/components/products/ProductHero';
 import ProductCard from '@/components/products/ProductCard';
 import Link from 'next/link';
 
-// Disable caching to always fetch fresh data from database
 export const revalidate = 0;
-
-interface ProductData {
-  id: string;
-  asin: string;
-  name: string;
-  price: number | null;
-  image_url: string | null;
-  amazon_url: string;
-  rating: number | null;
-  review_count: number | null;
-}
-
-interface CategoryData {
-  id: string;
-  name: string;
-  slug: string;
-  full_slug: string;
-  departments: {
-    name: string;
-    slug: string;
-  } | null;
-}
-
-interface BestsellerRanking {
-  id: string;
-  became_number_one_at: string;
-  products: ProductData | null;
-  categories: CategoryData | null;
-}
-
-async function getBestsellers(): Promise<BestsellerRanking[]> {
-  const supabase = createServerClient();
-
-  const { data, error } = await supabase
-    .from('bestseller_rankings')
-    .select(`
-      id,
-      became_number_one_at,
-      products (
-        id,
-        asin,
-        name,
-        price,
-        image_url,
-        amazon_url,
-        rating,
-        review_count
-      ),
-      categories (
-        id,
-        name,
-        slug,
-        full_slug,
-        departments (
-          name,
-          slug
-        )
-      )
-    `)
-    .eq('is_current', true)
-    .order('became_number_one_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching bestsellers:', error);
-    return [];
-  }
-
-  return (data || []) as unknown as BestsellerRanking[];
-}
+export const dynamic = 'force-dynamic';
 
 export default async function Home() {
-  const bestsellers = await getBestsellers();
+  let bestsellers: Awaited<ReturnType<typeof getCurrentBestsellers>> = [];
 
-  // Get the most recent bestseller for the hero
+  try {
+    bestsellers = await getCurrentBestsellers();
+  } catch (error) {
+    console.error('Error fetching bestsellers:', error);
+  }
+
   const heroProduct = bestsellers[0];
-  const feedProducts = bestsellers.slice(1);
+  const feedProducts = bestsellers.slice(1, 13);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">
@@ -90,16 +26,16 @@ export default async function Home() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        {heroProduct && heroProduct.products && heroProduct.categories && (
+        {heroProduct && (
           <ProductHero
-            asin={heroProduct.products.asin}
-            name={heroProduct.products.name}
-            price={heroProduct.products.price}
-            imageUrl={heroProduct.products.image_url}
-            amazonUrl={heroProduct.products.amazon_url}
-            rating={heroProduct.products.rating}
-            reviewCount={heroProduct.products.review_count}
-            categoryName={heroProduct.categories.name}
+            asin={heroProduct.product.asin}
+            name={heroProduct.product.name}
+            price={heroProduct.product.price}
+            imageUrl={heroProduct.product.image_url}
+            amazonUrl={heroProduct.product.amazon_url}
+            rating={heroProduct.product.rating}
+            reviewCount={heroProduct.product.review_count}
+            categoryName={heroProduct.category.name}
           />
         )}
 
@@ -141,25 +77,23 @@ export default async function Home() {
             {feedProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
                 {feedProducts.map((item) => (
-                  item.products && item.categories && (
-                    <ProductCard
-                      key={item.id}
-                      asin={item.products.asin}
-                      name={item.products.name}
-                      price={item.products.price}
-                      imageUrl={item.products.image_url}
-                      rating={item.products.rating}
-                      reviewCount={item.products.review_count}
-                      categoryName={item.categories.name}
-                      categorySlug={item.categories.full_slug}
-                    />
-                  )
+                  <ProductCard
+                    key={item.product.id}
+                    asin={item.product.asin}
+                    name={item.product.name}
+                    price={item.product.price}
+                    imageUrl={item.product.image_url}
+                    rating={item.product.rating}
+                    reviewCount={item.product.review_count}
+                    categoryName={item.category.name}
+                    categorySlug={item.category.full_slug}
+                  />
                 ))}
               </div>
             ) : (
               <div className="text-center py-16">
                 <p className="font-sans text-gray-500">
-                  No additional products to display.
+                  No products to display. Database may be initializing.
                 </p>
               </div>
             )}
@@ -168,7 +102,6 @@ export default async function Home() {
 
         {/* CTA Section */}
         <section className="relative overflow-hidden bg-black text-white">
-          {/* Background pattern */}
           <div className="absolute inset-0 opacity-5" style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
             backgroundSize: '32px 32px'
