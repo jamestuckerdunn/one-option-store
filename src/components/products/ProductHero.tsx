@@ -12,6 +12,30 @@ interface ProductHeroProps {
   categoryName: string;
 }
 
+function StarRating({ rating, size = 'md' }: { rating: number; size?: 'sm' | 'md' }) {
+  const sizeClass = size === 'sm' ? 'w-3 h-3' : 'w-6 h-6';
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <svg
+          key={star}
+          className={`${sizeClass} ${star <= Math.round(rating) ? 'fill-black' : 'fill-gray-200'}`}
+          viewBox="0 0 20 20"
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
+function formatPrice(price: number): { dollars: string; cents: string } {
+  return {
+    dollars: Math.floor(price).toString(),
+    cents: ((price % 1) * 100).toFixed(0).padStart(2, '0'),
+  };
+}
+
 export default function ProductHero({
   asin,
   name,
@@ -22,16 +46,13 @@ export default function ProductHero({
   reviewCount,
   categoryName,
 }: ProductHeroProps) {
+  const formattedPrice = price !== null ? formatPrice(price) : null;
+
   return (
     <section className="relative overflow-hidden">
-      {/* Premium gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-gray-100" />
-
-      {/* Animated background elements */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-gray-100/80 to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-gray-100/60 to-transparent rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
-
-      {/* Subtle grid pattern */}
       <div className="absolute inset-0 opacity-[0.015]" style={{
         backgroundImage: `linear-gradient(to right, black 1px, transparent 1px), linear-gradient(to bottom, black 1px, transparent 1px)`,
         backgroundSize: '60px 60px'
@@ -39,15 +60,11 @@ export default function ProductHero({
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
         <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-          {/* Product Image */}
           <div className="relative order-2 lg:order-1">
-            {/* Main image container */}
             <div className="relative aspect-square max-w-lg mx-auto">
-              {/* Decorative rings */}
               <div className="absolute inset-0 rounded-full border border-gray-200/50 scale-[1.15]" />
               <div className="absolute inset-0 rounded-full border border-gray-200/30 scale-[1.3]" />
 
-              {/* Main image */}
               <div className="relative aspect-square bg-white rounded-[40px] shadow-2xl shadow-black/10 overflow-hidden border border-gray-100">
                 {imageUrl ? (
                   <Image
@@ -67,11 +84,9 @@ export default function ProductHero({
                 )}
               </div>
 
-              {/* Floating elements */}
               <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-black rounded-3xl -z-10 opacity-5" />
               <div className="absolute -top-4 -left-4 w-20 h-20 bg-gray-200 rounded-2xl -z-10" />
 
-              {/* Stats card floating on image */}
               {rating !== null && (
                 <div className="absolute -right-4 lg:-right-8 top-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-xl shadow-black/10 p-4 border border-gray-100">
                   <div className="flex items-center gap-2">
@@ -90,9 +105,7 @@ export default function ProductHero({
             </div>
           </div>
 
-          {/* Product Info */}
           <div className="flex flex-col order-1 lg:order-2">
-            {/* Category Badge */}
             <div className="mb-8">
               <div className="inline-flex items-center gap-3 bg-black text-white px-5 py-3 rounded-2xl shadow-xl shadow-black/20">
                 <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center">
@@ -104,47 +117,33 @@ export default function ProductHero({
               </div>
             </div>
 
-            {/* Product Name */}
             <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[0.95] tracking-tight text-gray-900 mb-8">
               {name}
             </h1>
 
-            {/* Rating Stars */}
             {rating !== null && (
               <div className="flex items-center gap-4 mb-10">
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <svg
-                      key={star}
-                      className={`w-6 h-6 ${star <= Math.round(rating) ? 'fill-black' : 'fill-gray-200'}`}
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
+                <StarRating rating={rating} />
                 <span className="font-sans text-lg text-gray-500">
                   {rating.toFixed(1)} from {reviewCount?.toLocaleString()} reviews
                 </span>
               </div>
             )}
 
-            {/* Price */}
-            {price !== null && (
+            {formattedPrice && (
               <div className="mb-12">
                 <div className="text-sm text-gray-400 uppercase tracking-wider mb-2">Price</div>
                 <div className="flex items-baseline gap-3">
                   <span className="font-sans text-6xl lg:text-7xl font-bold text-gray-900">
-                    ${Math.floor(price)}
+                    ${formattedPrice.dollars}
                   </span>
                   <span className="font-sans text-3xl font-bold text-gray-400">
-                    .{((price % 1) * 100).toFixed(0).padStart(2, '0')}
+                    .{formattedPrice.cents}
                   </span>
                 </div>
               </div>
             )}
 
-            {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
               <a
                 href={amazonUrl}
@@ -165,7 +164,6 @@ export default function ProductHero({
               </Link>
             </div>
 
-            {/* Trust indicators */}
             <div className="flex flex-wrap items-center gap-8 pt-8 border-t border-gray-200">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">

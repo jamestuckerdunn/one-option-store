@@ -7,11 +7,19 @@ import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-interface Props {
+interface CategoryPageProps {
   params: Promise<{ slug: string[] }>;
 }
 
-export default async function CategoryPage({ params }: Props) {
+function BreadcrumbSeparator() {
+  return (
+    <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+    </svg>
+  );
+}
+
+export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
   const fullSlug = slug.join('/');
 
@@ -22,53 +30,36 @@ export default async function CategoryPage({ params }: Props) {
 
   const product = await getBestsellerForCategory(category.id);
 
-  // Get department for breadcrumb
-  let department = null;
-  if (category.department_id) {
-    const deptSlug = slug[0];
-    department = await getDepartmentBySlug(deptSlug);
-  }
+  const departmentSlug = slug[0];
+  const department = category.department_id
+    ? await getDepartmentBySlug(departmentSlug)
+    : null;
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">
       <Header />
 
       <main className="flex-1">
-        {/* Breadcrumb */}
         <div className="bg-gray-50 border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <nav className="font-sans text-sm text-gray-500 flex items-center gap-2 flex-wrap">
-              <Link href="/" className="hover:text-black transition-colors">
-                Home
-              </Link>
-              <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-              <Link href="/browse" className="hover:text-black transition-colors">
-                Browse
-              </Link>
+              <Link href="/" className="hover:text-black transition-colors">Home</Link>
+              <BreadcrumbSeparator />
+              <Link href="/browse" className="hover:text-black transition-colors">Browse</Link>
               {department && (
                 <>
-                  <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                  <Link
-                    href={`/department/${department.slug}`}
-                    className="hover:text-black transition-colors"
-                  >
+                  <BreadcrumbSeparator />
+                  <Link href={`/department/${department.slug}`} className="hover:text-black transition-colors">
                     {department.name}
                   </Link>
                 </>
               )}
-              <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <BreadcrumbSeparator />
               <span className="text-gray-900 font-medium">{category.name}</span>
             </nav>
           </div>
         </div>
 
-        {/* Product Hero or Empty State */}
         {product ? (
           <ProductHero
             asin={product.asin}
@@ -118,13 +109,10 @@ export default async function CategoryPage({ params }: Props) {
           </section>
         )}
 
-        {/* Category Info */}
         <section className="bg-gray-50 py-16 lg:py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-2xl">
-              <h2 className="font-serif text-2xl font-bold mb-4">
-                About This Category
-              </h2>
+              <h2 className="font-serif text-2xl font-bold mb-4">About This Category</h2>
               <p className="font-sans text-gray-600 leading-relaxed mb-6">
                 This product is the current #1 bestseller in Amazon&apos;s {category.name} category.
                 Rankings are updated frequently to ensure you always see the top choice.

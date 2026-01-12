@@ -7,11 +7,19 @@ import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-interface Props {
+interface DepartmentPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export default async function DepartmentPage({ params }: Props) {
+function BreadcrumbSeparator() {
+  return (
+    <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+    </svg>
+  );
+}
+
+export default async function DepartmentPage({ params }: DepartmentPageProps) {
   const { slug } = await params;
 
   const department = await getDepartmentBySlug(slug);
@@ -20,36 +28,26 @@ export default async function DepartmentPage({ params }: Props) {
   }
 
   const categories = await getCategoriesWithProductsByDepartment(department.id);
-  const mainCategory = categories.find((c) => c.depth === 0);
-  const subcategories = categories.filter((c) => c.depth === 1);
+  const mainCategory = categories.find((category) => category.depth === 0);
+  const subcategories = categories.filter((category) => category.depth === 1);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">
       <Header />
 
       <main className="flex-1">
-        {/* Breadcrumb */}
         <div className="bg-gray-50 border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <nav className="font-sans text-sm text-gray-500 flex items-center gap-2">
-              <Link href="/" className="hover:text-black transition-colors">
-                Home
-              </Link>
-              <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-              <Link href="/browse" className="hover:text-black transition-colors">
-                Browse
-              </Link>
-              <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <Link href="/" className="hover:text-black transition-colors">Home</Link>
+              <BreadcrumbSeparator />
+              <Link href="/browse" className="hover:text-black transition-colors">Browse</Link>
+              <BreadcrumbSeparator />
               <span className="text-gray-900 font-medium">{department.name}</span>
             </nav>
           </div>
         </div>
 
-        {/* Page Header */}
         <section className="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white border-b border-gray-100">
           <div className="absolute inset-0 opacity-[0.02]" style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, black 1px, transparent 0)`,
@@ -66,7 +64,6 @@ export default async function DepartmentPage({ params }: Props) {
           </div>
         </section>
 
-        {/* Featured Product */}
         {mainCategory?.product && (
           <section className="py-12 lg:py-16 bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -77,9 +74,7 @@ export default async function DepartmentPage({ params }: Props) {
                   </svg>
                   Featured
                 </span>
-                <h2 className="font-serif text-2xl font-bold">
-                  #1 in {department.name}
-                </h2>
+                <h2 className="font-serif text-2xl font-bold">#1 in {department.name}</h2>
               </div>
               <div className="max-w-sm">
                 <ProductCard
@@ -96,7 +91,6 @@ export default async function DepartmentPage({ params }: Props) {
           </section>
         )}
 
-        {/* Subcategories */}
         <section className="py-12 lg:py-16 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="font-serif text-2xl sm:text-3xl font-bold mb-8">
@@ -120,9 +114,7 @@ export default async function DepartmentPage({ params }: Props) {
                         #1: {category.product.name}
                       </p>
                     ) : (
-                      <p className="font-sans text-sm text-gray-400">
-                        View bestseller
-                      </p>
+                      <p className="font-sans text-sm text-gray-400">View bestseller</p>
                     )}
                     <div className="mt-4 flex items-center text-xs font-sans font-medium text-gray-400 group-hover:text-gray-600 transition-colors">
                       View category
@@ -135,9 +127,7 @@ export default async function DepartmentPage({ params }: Props) {
               </div>
             ) : (
               <div className="text-center py-16">
-                <p className="font-sans text-gray-500">
-                  No subcategories available yet.
-                </p>
+                <p className="font-sans text-gray-500">No subcategories available yet.</p>
               </div>
             )}
           </div>

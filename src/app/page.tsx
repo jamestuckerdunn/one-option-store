@@ -5,18 +5,10 @@ import ProductHero from '@/components/products/ProductHero';
 import ProductCard from '@/components/products/ProductCard';
 import Link from 'next/link';
 
-export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
-export default async function Home() {
-  let bestsellers: Awaited<ReturnType<typeof getCurrentBestsellers>> = [];
-
-  try {
-    bestsellers = await getCurrentBestsellers();
-  } catch (error) {
-    console.error('Error fetching bestsellers:', error);
-  }
-
+export default async function HomePage() {
+  const bestsellers = await getCurrentBestsellers().catch(() => []);
   const heroProduct = bestsellers[0];
   const feedProducts = bestsellers.slice(1, 13);
 
@@ -25,7 +17,6 @@ export default async function Home() {
       <Header />
 
       <main className="flex-1">
-        {/* Hero Section */}
         {heroProduct && (
           <ProductHero
             asin={heroProduct.product.asin}
@@ -39,7 +30,6 @@ export default async function Home() {
           />
         )}
 
-        {/* Intro Section */}
         <section className="py-20 lg:py-28">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-6">
@@ -51,7 +41,6 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Product Feed */}
         <section className="py-16 lg:py-24 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between mb-10">
@@ -86,7 +75,6 @@ export default async function Home() {
                     rating={item.product.rating}
                     reviewCount={item.product.review_count}
                     categoryName={item.category.name}
-                    categorySlug={item.category.full_slug}
                   />
                 ))}
               </div>
@@ -100,7 +88,6 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* CTA Section */}
         <section className="relative overflow-hidden bg-black text-white">
           <div className="absolute inset-0 opacity-5" style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
