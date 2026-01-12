@@ -1,18 +1,44 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { getProductByAsin, getProductCategories } from '@/lib/db';
+import { isValidAsin } from '@/lib/validation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300; // Revalidate every 5 minutes
 
 interface Props {
   params: Promise<{ asin: string }>;
 }
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { asin } = await params;
+  if (!isValidAsin(asin)) return {};
+
+  const product = await getProductByAsin(asin);
+  if (!product) return {};
+
+  const categories = await getProductCategories(product.id);
+  const categoryNames = categories.map(c => c.name).join(', ');
+
+  return {
+    title: product.name,
+    description: `${product.name} - #1 bestseller${categoryNames ? ` in ${categoryNames}` : ''}. ${product.rating ? `Rated ${product.rating}/5` : ''} ${product.price ? `$${product.price}` : ''}`.trim(),
+    openGraph: {
+      title: `${product.name} | One Option Store`,
+      description: `#1 bestseller${categoryNames ? ` in ${categoryNames}` : ''} on Amazon.`,
+      images: product.image_url ? [{ url: product.image_url }] : undefined,
+    },
+  };
+}
+
 export default async function ProductPage({ params }: Props) {
   const { asin } = await params;
+
+  if (!isValidAsin(asin)) notFound();
+
   const product = await getProductByAsin(asin);
 
   if (!product) notFound();

@@ -5,7 +5,7 @@ import Footer from '@/components/layout/Footer';
 import ProductHero from '@/components/products/ProductHero';
 import ProductCard from '@/components/products/ProductCard';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300; // Revalidate every 5 minutes
 
 export default async function Home() {
   const bestsellers = await getBestsellers().catch(() => []);

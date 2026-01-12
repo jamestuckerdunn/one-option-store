@@ -1,18 +1,40 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getDepartmentBySlug, getCategoriesWithProducts } from '@/lib/db';
+import { isValidSlug } from '@/lib/validation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ProductCard from '@/components/products/ProductCard';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300; // Revalidate every 5 minutes
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  if (!isValidSlug(slug)) return {};
+
+  const department = await getDepartmentBySlug(slug);
+  if (!department) return {};
+
+  return {
+    title: `${department.name} Bestsellers`,
+    description: `Discover the #1 bestselling products in ${department.name}. Only the top-rated items from Amazon's bestseller rankings.`,
+    openGraph: {
+      title: `${department.name} Bestsellers | One Option Store`,
+      description: `Discover the #1 bestselling products in ${department.name}.`,
+    },
+  };
+}
+
 export default async function DepartmentPage({ params }: Props) {
   const { slug } = await params;
+
+  if (!isValidSlug(slug)) notFound();
+
   const department = await getDepartmentBySlug(slug);
 
   if (!department) notFound();

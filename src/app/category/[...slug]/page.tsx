@@ -1,18 +1,48 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getCategoryBySlug, getBestsellerByCategory, getDepartmentBySlug } from '@/lib/db';
+import { isValidSlug } from '@/lib/validation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ProductHero from '@/components/products/ProductHero';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300; // Revalidate every 5 minutes
 
 interface Props {
   params: Promise<{ slug: string[] }>;
 }
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  if (!slug.every(isValidSlug)) return {};
+
+  const fullSlug = slug.join('/');
+  const category = await getCategoryBySlug(fullSlug);
+  if (!category) return {};
+
+  const product = await getBestsellerByCategory(category.id);
+
+  return {
+    title: `#1 Bestseller in ${category.name}`,
+    description: product
+      ? `${product.name} - The current #1 bestselling product in ${category.name} on Amazon.`
+      : `Discover the #1 bestselling product in ${category.name}.`,
+    openGraph: {
+      title: `#1 Bestseller in ${category.name} | One Option Store`,
+      description: product
+        ? `${product.name} - The #1 bestseller in ${category.name}.`
+        : `Discover the #1 bestseller in ${category.name}.`,
+      images: product?.image_url ? [{ url: product.image_url }] : undefined,
+    },
+  };
+}
+
 export default async function CategoryPage({ params }: Props) {
   const { slug } = await params;
+
+  if (!slug.every(isValidSlug)) notFound();
+
   const fullSlug = slug.join('/');
 
   const category = await getCategoryBySlug(fullSlug);
