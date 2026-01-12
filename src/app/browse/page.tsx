@@ -1,12 +1,16 @@
 import { getDepartments, type Department } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Revalidate every hour
 
 export default async function BrowsePage() {
-  const departments = await getDepartments().catch(() => [] as Department[]);
+  const departments = await getDepartments().catch((error) => {
+    logger.error('Failed to fetch departments for browse page', error);
+    return [] as Department[];
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">

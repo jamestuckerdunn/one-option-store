@@ -1,14 +1,18 @@
 import { getCurrentBestsellers } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ProductHero from '@/components/products/ProductHero';
 import ProductCard from '@/components/products/ProductCard';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Revalidate every hour
 
 export default async function HomePage() {
-  const bestsellers = await getCurrentBestsellers().catch(() => []);
+  const bestsellers = await getCurrentBestsellers().catch((error) => {
+    logger.error('Failed to fetch bestsellers for homepage', error);
+    return [];
+  });
   const heroProduct = bestsellers[0];
   const feedProducts = bestsellers.slice(1, 13);
 

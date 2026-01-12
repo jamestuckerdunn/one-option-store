@@ -11,7 +11,12 @@ interface ErrorPageProps {
 
 export default function ErrorPage({ error, reset }: ErrorPageProps) {
   useEffect(() => {
-    // Errors should be logged to an error reporting service in production
+    // Log error details
+    console.error('[ErrorPage]', {
+      message: error.message,
+      digest: error.digest,
+      stack: error.stack,
+    });
   }, [error]);
 
   return (
