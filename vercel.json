@@ -1,0 +1,19 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/scrape",
+      "schedule": "0 6 * * *"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/cron/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
+  ]
+}
