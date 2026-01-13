@@ -1,3 +1,4 @@
+// Admin API for product management - v2
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 
