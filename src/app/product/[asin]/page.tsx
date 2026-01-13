@@ -6,6 +6,8 @@ import { getProductByAsin, getProductCategories } from '@/lib/db';
 import { isValidAsin } from '@/lib/validation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { StarRating } from '@/components/ui/StarRating';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 export const revalidate = 300; // Revalidate every 5 minutes
 
@@ -50,15 +52,10 @@ export default async function ProductPage({ params }: Props) {
       <Header />
 
       <main className="flex-1">
-        <nav className="bg-gray-50 border-b">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Link href="/" className="hover:text-black">Home</Link>
-              <span>/</span>
-              <span className="text-black font-medium">Product</span>
-            </div>
-          </div>
-        </nav>
+        <Breadcrumb items={[
+          { label: 'Home', href: '/' },
+          { label: 'Product' }
+        ]} />
 
         <section className="py-12 lg:py-20">
           <div className="max-w-7xl mx-auto px-6">
@@ -103,17 +100,7 @@ export default async function ProductPage({ params }: Props) {
 
                 {product.rating !== null && (
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="flex gap-0.5">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <svg
-                          key={star}
-                          className={`w-5 h-5 ${star <= Math.round(product.rating!) ? 'fill-black' : 'fill-gray-200'}`}
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      ))}
-                    </div>
+                    <StarRating rating={product.rating} size="md" />
                     <span className="text-gray-600">
                       {product.rating.toFixed(1)} ({product.review_count?.toLocaleString()} reviews)
                     </span>

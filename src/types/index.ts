@@ -1,1 +1,1 @@
-export type { Department, Category, Product, ProductWithRanking, BestsellerRanking } from '@/lib/db';
+export type { Department, Category, Product, Bestseller } from '@/lib/db';

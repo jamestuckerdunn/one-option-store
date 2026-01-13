@@ -1,12 +1,16 @@
 import Link from 'next/link';
 import { getDepartments } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
 export const revalidate = 3600; // Revalidate every hour
 
 export default async function BrowsePage() {
-  const departments = await getDepartments().catch(() => []);
+  const departments = await getDepartments().catch((error) => {
+    logger.error('Failed to fetch departments for browse page', error);
+    return [];
+  });
 
   return (
     <div className="min-h-screen flex flex-col">

@@ -7,7 +7,7 @@
 import {
   getDepartments,
   getDepartmentBySlug,
-  getCategoryByFullSlug,
+  getCategoryBySlug,
   getProductByAsin,
 } from '@/lib/db';
 
@@ -41,13 +41,13 @@ describe('Database Queries', () => {
     });
   });
 
-  describe('getCategoryByFullSlug', () => {
+  describe('getCategoryBySlug', () => {
     it('should be a function', () => {
-      expect(typeof getCategoryByFullSlug).toBe('function');
+      expect(typeof getCategoryBySlug).toBe('function');
     });
 
     it('should accept a fullSlug parameter', () => {
-      expect(getCategoryByFullSlug.length).toBe(1);
+      expect(getCategoryBySlug.length).toBe(1);
     });
   });
 

@@ -1,5 +1,7 @@
 export { StarRating } from './StarRating';
 export { Breadcrumb } from './Breadcrumb';
+export { default as ExternalLink } from './ExternalLink';
+export { Skeleton, ProductGridSkeleton, ProductCardSkeleton } from './Skeleton';
 export {
   ChevronRightIcon,
   ArrowRightIcon,

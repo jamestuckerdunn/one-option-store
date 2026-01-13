@@ -6,6 +6,7 @@ import { isValidSlug } from '@/lib/validation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ProductCard from '@/components/products/ProductCard';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 export const revalidate = 300; // Revalidate every 5 minutes
 
@@ -47,17 +48,11 @@ export default async function DepartmentPage({ params }: Props) {
       <Header />
 
       <main className="flex-1">
-        <nav className="bg-gray-50 border-b">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Link href="/" className="hover:text-black">Home</Link>
-              <span>/</span>
-              <Link href="/browse" className="hover:text-black">Browse</Link>
-              <span>/</span>
-              <span className="text-black font-medium">{department.name}</span>
-            </div>
-          </div>
-        </nav>
+        <Breadcrumb items={[
+          { label: 'Home', href: '/' },
+          { label: 'Browse', href: '/browse' },
+          { label: department.name }
+        ]} />
 
         <section className="bg-gray-50 border-b">
           <div className="max-w-7xl mx-auto px-6 py-12">

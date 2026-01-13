@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { getDepartments, getBestsellers } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://oneoptionstore.com';
@@ -70,7 +71,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     }
   } catch (error) {
-    console.error('Error generating sitemap:', error);
+    logger.error('Error generating sitemap', error instanceof Error ? error : undefined);
   }
 
   return [...staticPages, ...dynamicPages];

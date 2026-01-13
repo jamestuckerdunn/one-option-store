@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getBestsellers } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ProductHero from '@/components/products/ProductHero';
@@ -8,7 +9,10 @@ import ProductCard from '@/components/products/ProductCard';
 export const revalidate = 300; // Revalidate every 5 minutes
 
 export default async function Home() {
-  const bestsellers = await getBestsellers().catch(() => []);
+  const bestsellers = await getBestsellers().catch((error) => {
+    logger.error('Failed to fetch bestsellers for home page', error);
+    return [];
+  });
   const hero = bestsellers[0];
   const products = bestsellers.slice(1, 13);
 
