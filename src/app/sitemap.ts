@@ -1,5 +1,5 @@
-import { MetadataRoute } from 'next';
-import { getDepartments, getCurrentBestsellers } from '@/lib/db';
+import type { MetadataRoute } from 'next';
+import { getDepartments, getBestsellers } from '@/lib/db';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://oneoptionstore.com';
@@ -26,53 +26,52 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Department pages
-  let departmentPages: MetadataRoute.Sitemap = [];
+  // Dynamic pages
+  const dynamicPages: MetadataRoute.Sitemap = [];
+
   try {
+    // Department pages
     const departments = await getDepartments();
-    departmentPages = departments.map((dept) => ({
-      url: `${baseUrl}/department/${dept.slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.8,
-    }));
-  } catch {
-    // Continue without department pages if DB fails
-  }
+    for (const dept of departments) {
+      dynamicPages.push({
+        url: `${baseUrl}/department/${dept.slug}`,
+        lastModified: new Date(),
+        changeFrequency: 'daily',
+        priority: 0.8,
+      });
+    }
 
-  // Product pages from current bestsellers
-  let productPages: MetadataRoute.Sitemap = [];
-  try {
-    const bestsellers = await getCurrentBestsellers();
-    const uniqueProducts = new Map<string, { asin: string; categorySlug: string }>();
+    // Product and category pages from bestsellers
+    const bestsellers = await getBestsellers();
+    const seenProducts = new Set<string>();
+    const seenCategories = new Set<string>();
 
-    bestsellers.forEach((item) => {
-      if (!uniqueProducts.has(item.product.asin)) {
-        uniqueProducts.set(item.product.asin, {
-          asin: item.product.asin,
-          categorySlug: item.category.full_slug,
+    for (const item of bestsellers) {
+      // Product pages
+      if (!seenProducts.has(item.product.asin)) {
+        seenProducts.add(item.product.asin);
+        dynamicPages.push({
+          url: `${baseUrl}/product/${item.product.asin}`,
+          lastModified: new Date(),
+          changeFrequency: 'daily',
+          priority: 0.7,
         });
       }
-    });
 
-    productPages = Array.from(uniqueProducts.values()).map((product) => ({
-      url: `${baseUrl}/product/${product.asin}`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.7,
-    }));
-
-    // Category pages
-    const categoryPages: MetadataRoute.Sitemap = bestsellers.map((item) => ({
-      url: `${baseUrl}/category/${item.category.full_slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.6,
-    }));
-
-    return [...staticPages, ...departmentPages, ...productPages, ...categoryPages];
-  } catch {
-    // Return static pages if DB fails
-    return [...staticPages, ...departmentPages, ...productPages];
+      // Category pages
+      if (!seenCategories.has(item.category.full_slug)) {
+        seenCategories.add(item.category.full_slug);
+        dynamicPages.push({
+          url: `${baseUrl}/category/${item.category.full_slug}`,
+          lastModified: new Date(),
+          changeFrequency: 'daily',
+          priority: 0.7,
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error generating sitemap:', error);
   }
+
+  return [...staticPages, ...dynamicPages];
 }

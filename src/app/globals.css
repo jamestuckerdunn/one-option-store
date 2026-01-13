@@ -1,68 +1,25 @@
 @import "tailwindcss";
 
-/* One Option Store - Modern B&W Design System */
-/* Product images are the ONLY color allowed */
-
 :root {
-  /* Core colors - B&W only */
-  --background: #ffffff;
-  --foreground: #000000;
-  --border-light: #e5e5e5;
-  --border-dark: #333333;
-  --gray-50: #fafafa;
-  --gray-100: #f5f5f5;
-  --gray-200: #e5e5e5;
-  --gray-300: #d4d4d4;
-  --gray-400: #a3a3a3;
-  --gray-500: #737373;
-  --gray-600: #525252;
-  --gray-700: #404040;
-  --gray-800: #262626;
-  --gray-900: #171717;
-
-  /* Typography - System fonts with beautiful fallbacks */
   --font-serif: Georgia, "Times New Roman", Times, serif;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-
-  /* Shadows - grayscale only */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.03);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.2);
-
-  /* Transitions */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-border-light: var(--border-light);
-  --color-border-dark: var(--border-dark);
   --font-serif: var(--font-serif);
   --font-sans: var(--font-sans);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: var(--font-sans);
-  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Headlines use Serif with tighter tracking */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-serif);
   letter-spacing: -0.02em;
-  line-height: 1.2;
 }
 
-/* Utility classes for the B&W design */
 .font-serif {
   font-family: var(--font-serif);
 }
@@ -71,139 +28,37 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-sans);
 }
 
-/* Custom shadow utilities */
-.shadow-soft {
-  box-shadow: var(--shadow-md);
-}
-
-.shadow-soft-lg {
-  box-shadow: var(--shadow-lg);
-}
-
-.shadow-soft-xl {
-  box-shadow: var(--shadow-xl);
-}
-
-/* Smooth transitions */
-.transition-smooth {
-  transition: all var(--transition-normal);
-}
-
-.transition-smooth-slow {
-  transition: all var(--transition-slow);
-}
-
-/* Card hover effect */
-.card-hover {
-  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
-}
-
-.card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-xl);
-}
-
-/* Image zoom on hover */
-.image-zoom {
-  transition: transform var(--transition-slow);
-}
-
-.group:hover .image-zoom {
-  transform: scale(1.05);
-}
-
-/* Gradient backgrounds */
-.bg-gradient-subtle {
-  background: linear-gradient(to bottom, var(--gray-50), var(--background));
-}
-
-/* Button styles */
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem 2rem;
-  background: var(--foreground);
-  color: var(--background);
-  font-weight: 500;
-  font-size: 0.875rem;
-  border-radius: 0.5rem;
-  transition: all var(--transition-fast);
-  box-shadow: var(--shadow-md);
-}
-
-.btn-primary:hover {
-  opacity: 0.9;
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-1px);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
-}
-
-.btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem 2rem;
-  background: transparent;
-  color: var(--foreground);
-  font-weight: 500;
-  font-size: 0.875rem;
-  border: 1px solid var(--foreground);
-  border-radius: 0.5rem;
-  transition: all var(--transition-fast);
-}
-
-.btn-secondary:hover {
-  background: var(--foreground);
-  color: var(--background);
-}
-
-/* Badge with pulse animation */
-@keyframes pulse-subtle {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.8;
-  }
-}
-
-.badge-pulse {
-  animation: pulse-subtle 2s ease-in-out infinite;
-}
-
-/* Shimmer animation for skeletons */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--gray-200) 25%,
-    var(--gray-100) 50%,
-    var(--gray-200) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-}
-
-/* Focus styles */
 *:focus-visible {
-  outline: 2px solid var(--foreground);
+  outline: 2px solid black;
   outline-offset: 2px;
 }
 
-/* Selection */
 ::selection {
-  background: var(--foreground);
-  color: var(--background);
+  background: black;
+  color: white;
+}
+
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

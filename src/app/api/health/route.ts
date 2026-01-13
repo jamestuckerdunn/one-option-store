@@ -1,47 +1,30 @@
 import { NextResponse } from 'next/server';
-import { neon } from '@neondatabase/serverless';
-import { logger } from '@/lib/logger';
+
+export const dynamic = 'force-dynamic';
 
 interface HealthStatus {
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: 'healthy' | 'unhealthy';
   timestamp: string;
-  checks: {
-    database: {
-      status: 'ok' | 'error';
-      latencyMs?: number;
-      error?: string;
-    };
-  };
+  version: string;
+  uptime: number;
 }
 
-export async function GET() {
-  const healthStatus: HealthStatus = {
+/**
+ * Health check endpoint for monitoring and load balancers.
+ * GET /api/health
+ */
+export async function GET(): Promise<NextResponse<HealthStatus>> {
+  const status: HealthStatus = {
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    checks: {
-      database: { status: 'ok' },
-    },
+    version: process.env.npm_package_version || '1.0.0',
+    uptime: process.uptime(),
   };
 
-  // Check database connectivity
-  const dbStart = Date.now();
-  try {
-    const connectionString = process.env.DATABASE_URL;
-    if (!connectionString) {
-      throw new Error('DATABASE_URL not configured');
-    }
-
-    const sql = neon(connectionString);
-    await sql`SELECT 1`;
-    healthStatus.checks.database.latencyMs = Date.now() - dbStart;
-  } catch (error) {
-    healthStatus.status = 'unhealthy';
-    healthStatus.checks.database.status = 'error';
-    healthStatus.checks.database.error = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Health check database failure', error instanceof Error ? error : new Error(String(error)));
-  }
-
-  const httpStatus = healthStatus.status === 'healthy' ? 200 : 503;
-
-  return NextResponse.json(healthStatus, { status: httpStatus });
+  return NextResponse.json(status, {
+    status: 200,
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  });
 }

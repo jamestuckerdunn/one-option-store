@@ -2,61 +2,59 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
-import PageLayout from '@/components/layout/PageLayout';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 
-interface ErrorPageProps {
+interface ErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
 }
 
-export default function ErrorPage({ error, reset }: ErrorPageProps) {
+export default function Error({ error, reset }: ErrorProps) {
   useEffect(() => {
-    // Log error details
-    console.error('[ErrorPage]', {
-      message: error.message,
-      digest: error.digest,
-      stack: error.stack,
-    });
+    console.error('Application error:', error);
   }, [error]);
 
   return (
-    <PageLayout>
-      <section className="relative overflow-hidden py-20 lg:py-32">
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-white" />
-        <div className="absolute inset-0 opacity-[0.02]" style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, black 1px, transparent 0)`,
-          backgroundSize: '40px 40px'
-        }} />
+    <div className="min-h-screen flex flex-col">
+      <Header />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-black text-white rounded-3xl mb-8">
-            <span className="text-4xl font-bold">!</span>
+      <main className="flex-1 flex items-center justify-center">
+        <div className="text-center px-6 py-20">
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-8">
+            <svg className="w-10 h-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
           </div>
 
-          <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-            Something went wrong
-          </h1>
+          <h1 className="font-serif text-4xl font-bold mb-4">Something Went Wrong</h1>
 
-          <p className="font-sans text-lg text-gray-500 mb-10 max-w-lg mx-auto">
-            We encountered an unexpected error. Please try again, and if the problem persists, contact support.
+          <p className="text-gray-600 mb-8 max-w-md mx-auto">
+            We encountered an unexpected error. Please try again.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={reset}
-              className="inline-flex items-center justify-center px-8 py-4 bg-black text-white font-sans text-sm font-semibold rounded-xl hover:bg-gray-900 transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center px-6 py-3 bg-black text-white font-semibold rounded-xl hover:bg-gray-800 transition"
             >
               Try Again
             </button>
             <Link
               href="/"
-              className="inline-flex items-center justify-center px-8 py-4 bg-white border-2 border-gray-200 text-gray-900 font-sans text-sm font-semibold rounded-xl hover:border-black transition-all duration-200"
+              className="inline-flex items-center justify-center px-6 py-3 border-2 border-gray-200 font-semibold rounded-xl hover:border-black transition"
             >
               Go Home
             </Link>
           </div>
+
+          {error.digest && (
+            <p className="mt-8 text-xs text-gray-400">Error ID: {error.digest}</p>
+          )}
         </div>
-      </section>
-    </PageLayout>
+      </main>
+
+      <Footer />
+    </div>
   );
 }
