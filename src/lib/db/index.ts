@@ -44,6 +44,20 @@ export interface Bestseller {
 
 type Row = Record<string, unknown>;
 
+/** Helper to convert a database row to a Product object with proper type conversion */
+function rowToProduct(r: Row): Product {
+  return {
+    id: String(r.id),
+    asin: String(r.asin),
+    name: String(r.name),
+    price: r.price != null ? Number(r.price) : null,
+    image_url: r.image_url as string | null,
+    amazon_url: String(r.amazon_url),
+    rating: r.rating != null ? Number(r.rating) : null,
+    review_count: r.review_count != null ? Number(r.review_count) : null,
+  };
+}
+
 /** Lazy-initialized database connection */
 let sql: ReturnType<typeof neon> | null = null;
 
@@ -130,7 +144,7 @@ export async function getProductByAsin(asin: string): Promise<Product | null> {
     LIMIT 1
   `;
   const rows = result as unknown as Row[];
-  return rows.length > 0 ? (rows[0] as unknown as Product) : null;
+  return rows.length > 0 ? rowToProduct(rows[0]) : null;
 }
 
 /**
@@ -157,11 +171,11 @@ export async function getBestsellers(): Promise<Bestseller[]> {
       id: String(r.id),
       asin: String(r.asin),
       name: String(r.name),
-      price: r.price as number | null,
+      price: r.price != null ? Number(r.price) : null,
       image_url: r.image_url as string | null,
       amazon_url: String(r.amazon_url),
-      rating: r.rating as number | null,
-      review_count: r.review_count as number | null,
+      rating: r.rating != null ? Number(r.rating) : null,
+      review_count: r.review_count != null ? Number(r.review_count) : null,
     },
     category: {
       id: String(r.cat_id),
@@ -193,7 +207,7 @@ export async function getBestsellerByCategory(categoryId: string): Promise<Produ
     LIMIT 1
   `;
   const rows = result as unknown as Row[];
-  return rows.length > 0 ? (rows[0] as unknown as Product) : null;
+  return rows.length > 0 ? rowToProduct(rows[0]) : null;
 }
 
 /**
@@ -224,11 +238,11 @@ export async function getCategoriesWithProducts(departmentId: string): Promise<(
       id: String(r.prod_id),
       asin: String(r.asin),
       name: String(r.prod_name),
-      price: r.price as number | null,
+      price: r.price != null ? Number(r.price) : null,
       image_url: r.image_url as string | null,
       amazon_url: String(r.amazon_url),
-      rating: r.rating as number | null,
-      review_count: r.review_count as number | null,
+      rating: r.rating != null ? Number(r.rating) : null,
+      review_count: r.review_count != null ? Number(r.review_count) : null,
     } : null,
   }));
 }
