@@ -62,8 +62,19 @@ export class AdminApiClient {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const message = error.response?.data?.error || error.message;
-        return { success: false, error: message };
+        // Extract error message from response
+        const data = error.response?.data;
+        let message = error.message;
+        if (data) {
+          if (typeof data === 'string') {
+            message = data;
+          } else if (data.error) {
+            message = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+          } else {
+            message = JSON.stringify(data);
+          }
+        }
+        return { success: false, error: `${error.response?.status || 'Network'}: ${message}` };
       }
       return {
         success: false,

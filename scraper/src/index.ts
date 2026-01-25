@@ -3,16 +3,17 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
 
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, '../../.env.local') });
+// Load environment variables (scraper .env takes precedence)
 dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config({ path: path.join(__dirname, '../../.env.local') });
 
 import { createScraper, randomDelay } from './scraper';
 import {
   discoverAllCategories,
+  discoverDepartments,
+  departmentsToCategories,
   saveCategoryList,
   loadCategoryList,
-  Category,
 } from './categories';
 import { extractBestseller } from './products';
 import { createApiClient, ProductPayload } from './api';
@@ -63,8 +64,15 @@ async function discoverCategories(): Promise<void> {
     await scraper.launch();
     const page = await scraper.newPage();
 
-    // Discover all categories
-    const categories = await discoverAllCategories(page);
+    // First try full discovery with subcategories
+    let categories = await discoverAllCategories(page);
+
+    // If no subcategories found, fall back to department-level categories
+    if (categories.length === 0) {
+      console.log('\nNo subcategories found, using department-level categories...');
+      const departments = await discoverDepartments(page);
+      categories = departmentsToCategories(departments);
+    }
 
     // Save to file
     ensureDataDir();

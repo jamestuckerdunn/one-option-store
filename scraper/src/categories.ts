@@ -48,10 +48,8 @@ export async function discoverDepartments(
     timeout: 60000,
   });
 
-  // Wait for department links to load
-  await page.waitForSelector('div[role="group"] a, div[role="treeitem"] a', {
-    timeout: 30000,
-  });
+  // Wait for page to load
+  await randomDelay(3000, 5000);
 
   // Extract department links from the left sidebar
   const deptData = await page.evaluate(() => {
@@ -59,11 +57,13 @@ export async function discoverDepartments(
 
     // Try multiple selectors for department navigation
     const selectors = [
-      'div[role="group"] a[href*="zgbs"]',
       'div[role="treeitem"] a[href*="zgbs"]',
-      'ul.zg_browseRoot a[href*="zgbs"]',
-      '#zg_browseRoot a[href*="zgbs"]',
-      'div._p13n-zg-nav-tree-all_style_zg-browse-group__88fbz a',
+      'div[role="group"] a[href*="zgbs"]',
+      'a[href*="/gp/bestsellers/"][href*="zgbs"]',
+      'a[href*="amazon.com/Best-Sellers"]',
+      // Look for any link in the left nav area with bestseller URLs
+      '[class*="browse"] a[href*="zgbs"]',
+      '[class*="nav"] a[href*="zgbs"]',
     ];
 
     for (const selector of selectors) {
@@ -76,13 +76,14 @@ export async function discoverDepartments(
           if (
             name &&
             href &&
-            href.includes('zgbs') &&
+            (href.includes('zgbs') || href.includes('bestsellers')) &&
+            !href.includes('ref=zg_bs') && // Skip "see more" links
             !results.some((r) => r.href === href)
           ) {
             results.push({ name, href });
           }
         });
-        break;
+        if (results.length > 0) break;
       }
     }
 
@@ -102,6 +103,21 @@ export async function discoverDepartments(
 
   console.log(`Found ${departments.length} departments`);
   return departments;
+}
+
+// Convert departments directly to categories (simpler approach)
+export function departmentsToCategories(
+  departments: { name: string; slug: string; url: string }[]
+): Category[] {
+  return departments.map((dept) => ({
+    name: dept.name,
+    slug: dept.slug,
+    url: dept.url,
+    departmentName: dept.name,
+    departmentSlug: dept.slug,
+    fullSlug: dept.slug, // Top-level category
+    level: 1,
+  }));
 }
 
 export async function discoverSubcategories(
