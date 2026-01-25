@@ -1,0 +1,89 @@
+name: Daily Amazon Scrape
+
+on:
+  schedule:
+    # Run daily at 6 AM UTC (1 AM EST, 10 PM PST)
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    # Allow manual triggers with optional parameters
+    inputs:
+      batch_size:
+        description: 'Number of categories to process'
+        required: false
+        default: '50'
+      start_index:
+        description: 'Starting category index (0 to start from beginning)'
+        required: false
+        default: '0'
+      run_discovery:
+        description: 'Run category discovery first'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: scraper/package-lock.json
+
+      - name: Install scraper dependencies
+        working-directory: ./scraper
+        run: npm ci
+
+      - name: Create data directory
+        working-directory: ./scraper
+        run: mkdir -p data
+
+      - name: Download previous state
+        uses: actions/download-artifact@v4
+        with:
+          name: scraper-state
+          path: ./scraper/data
+        continue-on-error: true
+
+      - name: Run category discovery
+        if: ${{ github.event.inputs.run_discovery == 'true' }}
+        working-directory: ./scraper
+        env:
+          ADMIN_API_URL: ${{ secrets.ADMIN_API_URL }}
+          ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
+        run: npm run discover
+
+      - name: Run product scraper
+        working-directory: ./scraper
+        env:
+          ADMIN_API_URL: ${{ secrets.ADMIN_API_URL }}
+          ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
+        run: |
+          BATCH_SIZE="${{ github.event.inputs.batch_size || '50' }}"
+          START_INDEX="${{ github.event.inputs.start_index || '0' }}"
+          npm run scrape -- "$BATCH_SIZE" "$START_INDEX"
+
+      - name: Upload scraper state
+        uses: actions/upload-artifact@v4
+        with:
+          name: scraper-state
+          path: |
+            ./scraper/data/categories.json
+            ./scraper/data/scraper-state.json
+          retention-days: 30
+        if: always()
+
+      - name: Report status
+        if: always()
+        run: |
+          echo "Scrape completed at $(date)"
+          if [ -f ./scraper/data/scraper-state.json ]; then
+            cat ./scraper/data/scraper-state.json
+          fi
