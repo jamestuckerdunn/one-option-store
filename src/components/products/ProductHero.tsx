@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { StarRating } from '@/components/ui/StarRating';
+import { getAffiliateUrl } from '@/lib/affiliate';
 
 interface ProductHeroProps {
   asin: string;
@@ -23,6 +24,7 @@ export default function ProductHero({
   reviewCount,
   categoryName,
 }: ProductHeroProps) {
+  const affiliateUrl = getAffiliateUrl(amazonUrl);
   return (
     <section className="bg-gray-50 py-16 lg:py-24">
       <div className="max-w-7xl mx-auto px-6">
@@ -69,7 +71,7 @@ export default function ProductHero({
 
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                href={amazonUrl}
+                href={affiliateUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 inline-flex items-center justify-center px-8 py-4 bg-black text-white font-semibold rounded-xl hover:bg-gray-800 transition"

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import SkipLink from "@/components/layout/SkipLink";
+import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://oneoptionstore.com';
@@ -61,6 +62,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
+        <GoogleAnalytics />
         <SkipLink />
         {children}
       </body>

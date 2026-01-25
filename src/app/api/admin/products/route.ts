@@ -87,8 +87,7 @@ export async function POST(request: NextRequest) {
       VALUES (${department.name}, ${department.slug}, ${department.sortOrder ?? 0})
       ON CONFLICT (slug) DO UPDATE SET
         name = EXCLUDED.name,
-        sort_order = COALESCE(EXCLUDED.sort_order, departments.sort_order),
-        updated_at = NOW()
+        sort_order = COALESCE(EXCLUDED.sort_order, departments.sort_order)
       RETURNING id
     `;
     const deptRows = deptResult as unknown as Row[];
@@ -101,8 +100,7 @@ export async function POST(request: NextRequest) {
       ON CONFLICT (full_slug) DO UPDATE SET
         name = EXCLUDED.name,
         slug = EXCLUDED.slug,
-        department_id = EXCLUDED.department_id,
-        updated_at = NOW()
+        department_id = EXCLUDED.department_id
       RETURNING id
     `;
     const catRows = catResult as unknown as Row[];
@@ -143,8 +141,8 @@ export async function POST(request: NextRequest) {
 
     // Then insert new ranking
     await db()`
-      INSERT INTO bestseller_rankings (product_id, category_id, rank, is_current, recorded_at)
-      VALUES (${productId}, ${categoryId}, 1, true, NOW())
+      INSERT INTO bestseller_rankings (product_id, category_id, is_current, became_number_one_at)
+      VALUES (${productId}, ${categoryId}, true, NOW())
     `;
 
     return NextResponse.json({

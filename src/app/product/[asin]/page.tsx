@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { getProductByAsin, getProductCategories } from '@/lib/db';
 import { isValidAsin } from '@/lib/validation';
+import { getAffiliateUrl } from '@/lib/affiliate';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { StarRating } from '@/components/ui/StarRating';
@@ -112,7 +113,7 @@ export default async function ProductPage({ params }: Props) {
                 )}
 
                 <a
-                  href={product.amazon_url}
+                  href={getAffiliateUrl(product.amazon_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center px-8 py-4 bg-black text-white font-semibold rounded-xl hover:bg-gray-900 transition w-full sm:w-auto justify-center"
