@@ -261,3 +261,51 @@ export async function getProductCategories(productId: string): Promise<Category[
   `;
   return result as unknown as Category[];
 }
+
+/**
+ * Retrieves bestsellers grouped by department with product count per department.
+ * @param limit - Maximum number of products per department
+ * @returns Array of departments with their bestseller products
+ */
+export async function getBestsellersByDepartment(limit = 4): Promise<{ department: Department; products: Bestseller[] }[]> {
+  const bestsellers = await getBestsellers();
+
+  // Group by department
+  const grouped = new Map<string, { department: Department; products: Bestseller[] }>();
+
+  for (const item of bestsellers) {
+    const deptId = item.department.id;
+    if (!grouped.has(deptId)) {
+      grouped.set(deptId, { department: item.department, products: [] });
+    }
+    const group = grouped.get(deptId)!;
+    if (group.products.length < limit) {
+      group.products.push(item);
+    }
+  }
+
+  return Array.from(grouped.values()).sort((a, b) => a.department.sort_order - b.department.sort_order);
+}
+
+/**
+ * Retrieves departments with their product count.
+ * @returns Array of departments with bestseller count
+ */
+export async function getDepartmentsWithCount(): Promise<(Department & { productCount: number })[]> {
+  const result = await db()`
+    SELECT d.id, d.name, d.slug, d.sort_order, COUNT(DISTINCT br.product_id) as product_count
+    FROM departments d
+    LEFT JOIN categories c ON c.department_id = d.id
+    LEFT JOIN bestseller_rankings br ON br.category_id = c.id AND br.is_current = true
+    GROUP BY d.id, d.name, d.slug, d.sort_order
+    ORDER BY d.sort_order, d.name
+  `;
+  const rows = result as unknown as Row[];
+  return rows.map((r) => ({
+    id: String(r.id),
+    name: String(r.name),
+    slug: String(r.slug),
+    sort_order: Number(r.sort_order),
+    productCount: Number(r.product_count || 0),
+  }));
+}
