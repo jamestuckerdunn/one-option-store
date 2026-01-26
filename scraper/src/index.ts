@@ -10,8 +10,6 @@ dotenv.config({ path: path.join(__dirname, '../../.env.local') });
 import { createScraper, randomDelay } from './scraper';
 import {
   discoverAllCategories,
-  discoverDepartments,
-  departmentsToCategories,
   saveCategoryList,
   loadCategoryList,
 } from './categories';
@@ -64,21 +62,29 @@ async function discoverCategories(): Promise<void> {
     await scraper.launch();
     const page = await scraper.newPage();
 
-    // First try full discovery with subcategories
-    let categories = await discoverAllCategories(page);
+    // Discover all categories (departments + level-2 + level-3)
+    // The function handles fallback to department-level internally
+    const categories = await discoverAllCategories(page);
 
-    // If no subcategories found, fall back to department-level categories
     if (categories.length === 0) {
-      console.log('\nNo subcategories found, using department-level categories...');
-      const departments = await discoverDepartments(page);
-      categories = departmentsToCategories(departments);
+      console.log('\nWARNING: No categories found! Check selectors.');
+      return;
     }
 
     // Save to file
     ensureDataDir();
     saveCategoryList(categories, CATEGORIES_FILE);
 
-    console.log(`\nDiscovery complete. ${categories.length} categories saved.`);
+    // Log summary by level
+    const level1 = categories.filter(c => c.level === 1).length;
+    const level2 = categories.filter(c => c.level === 2).length;
+    const level3 = categories.filter(c => c.level === 3).length;
+
+    console.log(`\n=== Discovery Complete ===`);
+    console.log(`Level 1 (Departments): ${level1}`);
+    console.log(`Level 2 (Subcategories): ${level2}`);
+    console.log(`Level 3 (Sub-subcategories): ${level3}`);
+    console.log(`Total: ${categories.length} categories saved.`);
   } finally {
     await scraper.close();
   }

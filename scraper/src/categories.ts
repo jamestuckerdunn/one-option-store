@@ -19,20 +19,25 @@ function slugify(text: string): string {
     .replace(/^-|-$/g, '');
 }
 
-// Extract department/category from Amazon bestseller URL
+// Extract department/category slug from Amazon bestseller URL
+// Example URLs:
+// - /gp/bestsellers/electronics (level 1)
+// - /zgbs/electronics/502394 (level 2 - Camera & Photo)
+// - /zgbs/electronics/502394/281052 (level 3 - Digital Cameras)
 function extractSlugFromUrl(url: string): string {
-  // Example: /Best-Sellers-Electronics/zgbs/electronics
-  // or /gp/bestsellers/electronics/ref=...
-  const match = url.match(/(?:zgbs|bestsellers)\/([^\/\?]+)/);
+  // Try to extract the main category slug
+  const match = url.match(/(?:zgbs|bestsellers)\/([a-z0-9-]+)/i);
   if (match) {
     return match[1];
   }
-  // Fallback: extract from full path
-  const pathMatch = url.match(/Best-Sellers[^\/]*\/zgbs\/([^\/\?]+)/);
-  if (pathMatch) {
-    return pathMatch[1];
-  }
   return '';
+}
+
+// Extract the numeric category ID from URL (for deeper levels)
+function extractCategoryId(url: string): string | null {
+  // Match /zgbs/department/123456 or /zgbs/department/123456/789012
+  const match = url.match(/zgbs\/[^\/]+\/(\d+)/);
+  return match ? match[1] : null;
 }
 
 export async function discoverDepartments(
@@ -52,18 +57,21 @@ export async function discoverDepartments(
   await randomDelay(3000, 5000);
 
   // Extract department links from the left sidebar
+  // Amazon's current structure uses classes like zg-browse-item, zg-browse-group
   const deptData = await page.evaluate(() => {
     const results: { name: string; href: string }[] = [];
 
-    // Try multiple selectors for department navigation
+    // Modern Amazon selectors (2024+)
     const selectors = [
+      // Primary: list items with browse class
+      '[class*="zg-browse-item"] a[href*="zgbs"]',
+      'li[class*="zg-browse"] a[href*="zgbs"]',
+      // Fallback: any link in browse navigation
+      '[class*="browse-root"] a[href*="zgbs"]',
+      '[class*="browse-group"] a[href*="zgbs"]',
+      // Legacy selectors
       'div[role="treeitem"] a[href*="zgbs"]',
       'div[role="group"] a[href*="zgbs"]',
-      'a[href*="/gp/bestsellers/"][href*="zgbs"]',
-      'a[href*="amazon.com/Best-Sellers"]',
-      // Look for any link in the left nav area with bestseller URLs
-      '[class*="browse"] a[href*="zgbs"]',
-      '[class*="nav"] a[href*="zgbs"]',
     ];
 
     for (const selector of selectors) {
@@ -76,8 +84,8 @@ export async function discoverDepartments(
           if (
             name &&
             href &&
+            name !== 'Any Department' &&
             (href.includes('zgbs') || href.includes('bestsellers')) &&
-            !href.includes('ref=zg_bs') && // Skip "see more" links
             !results.some((r) => r.href === href)
           ) {
             results.push({ name, href });
@@ -138,73 +146,154 @@ export async function discoverSubcategories(
     // Wait for category tree to load
     await randomDelay(2000, 4000);
 
-    // Extract subcategory links
-    const subcatData = await page.evaluate(() => {
-      const results: { name: string; href: string; level: number }[] = [];
+    // Extract level-2 subcategory links from sidebar
+    // Amazon uses classes like zg-browse-item for category links
+    const level2Data = await page.evaluate((deptSlug: string) => {
+      const results: { name: string; href: string }[] = [];
 
-      // Look for nested category links
-      const treeItems = document.querySelectorAll(
-        'div[role="treeitem"], div[role="group"] div[role="treeitem"]'
-      );
-      treeItems.forEach((item) => {
-        const link = item.querySelector('a[href*="zgbs"]') as HTMLAnchorElement;
-        if (link) {
-          const name = link.textContent?.trim();
-          // Determine nesting level by counting parent groups
-          let level = 1;
-          let parent = item.parentElement;
-          while (parent) {
-            if (
-              parent.getAttribute('role') === 'group' ||
-              parent.classList.contains('zg_browseRoot')
-            ) {
-              level++;
-            }
-            parent = parent.parentElement;
-          }
-          if (name && link.href) {
-            results.push({ name, href: link.href, level: Math.min(level, 3) });
-          }
-        }
-      });
+      // Modern Amazon selectors
+      const selectors = [
+        '[class*="zg-browse-item"] a[href*="zgbs"]',
+        'li[class*="zg-browse"] a[href*="zgbs"]',
+        '[class*="browse-group"] a[href*="zgbs"]',
+      ];
 
-      // Fallback: look for any bestseller links in sidebar
-      if (results.length === 0) {
-        const allLinks = document.querySelectorAll(
-          'a[href*="zgbs/"]:not([href*="ref=zg"])'
-        );
-        allLinks.forEach((link) => {
+      for (const selector of selectors) {
+        const links = document.querySelectorAll(selector);
+        links.forEach((link) => {
           const anchor = link as HTMLAnchorElement;
           const name = anchor.textContent?.trim();
-          if (name && anchor.href && !results.some((r) => r.href === anchor.href)) {
-            results.push({ name, href: anchor.href, level: 2 });
+          const href = anchor.href;
+
+          // Skip "Any Department" and the current department
+          if (
+            name &&
+            href &&
+            name !== 'Any Department' &&
+            href.includes('zgbs') &&
+            !results.some((r) => r.href === href)
+          ) {
+            // Check if this is a subcategory (has numeric ID in URL)
+            // e.g., /zgbs/electronics/502394 has ID 502394
+            const hasNumericId = /zgbs\/[^\/]+\/\d+/.test(href);
+            if (hasNumericId) {
+              results.push({ name, href });
+            }
           }
         });
+        if (results.length > 0) break;
       }
 
       return results;
-    });
+    }, departmentSlug);
 
-    for (const subcat of subcatData) {
-      const catSlug = extractSlugFromUrl(subcat.href) || slugify(subcat.name);
-      if (catSlug && catSlug !== departmentSlug) {
-        const fullSlug = `${departmentSlug}/${catSlug}`;
-        if (!categories.some((c) => c.fullSlug === fullSlug)) {
-          categories.push({
-            name: subcat.name,
-            slug: catSlug,
-            url: subcat.href,
-            departmentName,
-            departmentSlug,
-            fullSlug,
-            level: subcat.level,
-          });
+    console.log(`  Found ${level2Data.length} level-2 subcategories`);
+
+    // Collect all level-2 URLs to exclude when finding level-3
+    const level2Urls = new Set(level2Data.map(l => l.href));
+
+    // For each level-2 subcategory, discover level-3 subcategories
+    for (const level2 of level2Data) {
+      const level2Slug = slugify(level2.name);
+
+      // Add level-2 category
+      const level2FullSlug = `${departmentSlug}/${level2Slug}`;
+      if (!categories.some((c) => c.fullSlug === level2FullSlug)) {
+        categories.push({
+          name: level2.name,
+          slug: level2Slug,
+          url: level2.href,
+          departmentName,
+          departmentSlug,
+          fullSlug: level2FullSlug,
+          level: 2,
+        });
+      }
+
+      // Navigate to level-2 page to find level-3 subcategories
+      await randomDelay(3000, 6000);
+
+      try {
+        await page.goto(level2.href, {
+          waitUntil: 'networkidle2',
+          timeout: 60000,
+        });
+        await randomDelay(2000, 4000);
+
+        // Extract level-3 subcategories - these are links with numeric IDs
+        // that we haven't seen as level-2 categories
+        const level3Data = await page.evaluate((level2UrlsArray: string[]) => {
+          const results: { name: string; href: string }[] = [];
+          const excludeUrls = new Set(level2UrlsArray);
+
+          const selectors = [
+            '[class*="zg-browse-item"] a[href*="zgbs"]',
+            'li[class*="zg-browse"] a[href*="zgbs"]',
+          ];
+
+          for (const selector of selectors) {
+            const links = document.querySelectorAll(selector);
+            links.forEach((link) => {
+              const anchor = link as HTMLAnchorElement;
+              const name = anchor.textContent?.trim();
+              const href = anchor.href;
+
+              // Get base URL without query params for comparison
+              const baseHref = href.split('?')[0].split('/ref=')[0];
+
+              if (
+                name &&
+                href &&
+                name !== 'Any Department' &&
+                href.includes('zgbs') &&
+                !results.some((r) => r.href === href)
+              ) {
+                // Level-3 categories have numeric IDs but aren't in level-2 set
+                const hasNumericId = /zgbs\/[^\/]+\/\d+/.test(href);
+                const isNotLevel2 = !Array.from(excludeUrls).some(
+                  url => url.split('?')[0].split('/ref=')[0] === baseHref
+                );
+
+                if (hasNumericId && isNotLevel2) {
+                  results.push({ name, href });
+                }
+              }
+            });
+            if (results.length > 0) break;
+          }
+
+          return results;
+        }, Array.from(level2Urls));
+
+        // Add level-3 categories
+        for (const level3 of level3Data) {
+          const level3Slug = slugify(level3.name);
+          const level3FullSlug = `${departmentSlug}/${level2Slug}/${level3Slug}`;
+
+          if (!categories.some((c) => c.fullSlug === level3FullSlug)) {
+            categories.push({
+              name: level3.name,
+              slug: level3Slug,
+              url: level3.href,
+              departmentName,
+              departmentSlug,
+              fullSlug: level3FullSlug,
+              level: 3,
+            });
+          }
         }
+
+        if (level3Data.length > 0) {
+          console.log(`    ${level2.name}: ${level3Data.length} level-3 subcategories`);
+        }
+      } catch (navError) {
+        console.error(`    Error navigating to ${level2.name}:`,
+          navError instanceof Error ? navError.message : navError);
       }
     }
 
     console.log(
-      `Found ${categories.length} subcategories in ${departmentName}`
+      `Found ${categories.length} total subcategories in ${departmentName}`
     );
   } catch (error) {
     console.error(
@@ -249,12 +338,26 @@ export async function discoverAllCategories(
       dept.slug
     );
 
-    // Limit categories per department if specified
-    const catsToAdd = maxCategoriesPerDept
-      ? subcats.slice(0, maxCategoriesPerDept)
-      : subcats;
+    // If no subcategories found, add the department as a level-1 category
+    if (subcats.length === 0) {
+      console.log(`  No subcategories found, adding department as category`);
+      allCategories.push({
+        name: dept.name,
+        slug: dept.slug,
+        url: dept.url,
+        departmentName: dept.name,
+        departmentSlug: dept.slug,
+        fullSlug: dept.slug,
+        level: 1,
+      });
+    } else {
+      // Limit categories per department if specified
+      const catsToAdd = maxCategoriesPerDept
+        ? subcats.slice(0, maxCategoriesPerDept)
+        : subcats;
 
-    allCategories.push(...catsToAdd);
+      allCategories.push(...catsToAdd);
+    }
 
     console.log(
       `Total categories so far: ${allCategories.length}`
