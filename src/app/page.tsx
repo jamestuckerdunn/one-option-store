@@ -55,7 +55,7 @@ export default async function Home() {
                     <div className="flex items-center gap-3 mb-6">
                       <StarRating rating={hero.product.rating} size="md" />
                       <span className="text-gray-500 text-sm">
-                        {hero.product.rating.toFixed(1)} ({hero.product.reviewCount?.toLocaleString()} reviews)
+                        {hero.product.rating.toFixed(1)} ({hero.product.review_count?.toLocaleString()} reviews)
                       </span>
                     </div>
                   )}
@@ -235,11 +235,11 @@ export default async function Home() {
                           {item.product.rating !== null && (
                             <div className="text-right">
                               <StarRating rating={item.product.rating} size="sm" />
-                              {item.product.reviewCount !== null && (
+                              {item.product.review_count !== null && (
                                 <span className="text-xs text-gray-400 block">
-                                  {item.product.reviewCount >= 1000
-                                    ? `${(item.product.reviewCount / 1000).toFixed(0)}k`
-                                    : item.product.reviewCount} reviews
+                                  {item.product.review_count >= 1000
+                                    ? `${(item.product.review_count / 1000).toFixed(0)}k`
+                                    : item.product.review_count} reviews
                                 </span>
                               )}
                             </div>
