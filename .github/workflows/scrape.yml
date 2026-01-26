@@ -66,8 +66,19 @@ jobs:
           ADMIN_API_URL: ${{ secrets.ADMIN_API_URL }}
           ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
         run: |
-          BATCH_SIZE="${{ github.event.inputs.batch_size || '50' }}"
-          START_INDEX="${{ github.event.inputs.start_index || '0' }}"
+          BATCH_SIZE="${{ github.event.inputs.batch_size || '100' }}"
+          # Auto-resume from saved state if start_index is 0 or not specified
+          if [ "${{ github.event.inputs.start_index }}" = "0" ] || [ -z "${{ github.event.inputs.start_index }}" ]; then
+            if [ -f ./data/scraper-state.json ]; then
+              SAVED_INDEX=$(cat ./data/scraper-state.json | jq -r '.lastCategoryIndex // 0')
+              START_INDEX="$SAVED_INDEX"
+              echo "Resuming from saved index: $START_INDEX"
+            else
+              START_INDEX="0"
+            fi
+          else
+            START_INDEX="${{ github.event.inputs.start_index }}"
+          fi
           npm run scrape -- "$BATCH_SIZE" "$START_INDEX"
 
       - name: Upload scraper state
