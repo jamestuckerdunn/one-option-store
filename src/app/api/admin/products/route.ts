@@ -1,6 +1,17 @@
 // Admin API for product management - v2
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
+import { isAdminAuthorized } from '@/lib/auth';
+import { logger } from '@/lib/logger';
+import {
+  isJsonContentType,
+  isValidAsin,
+  isValidSlug,
+  isValidAmazonUrl,
+  MAX_BODY_SIZES,
+} from '@/lib/validation';
+import { checkRateLimit, getClientIdentifier, createRateLimitHeaders } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/constants';
 
 interface ProductPayload {
   department: {
@@ -37,21 +48,41 @@ function db() {
 }
 
 export async function POST(request: NextRequest) {
-  // Verify authorization
-  const authHeader = request.headers.get('authorization');
-  const adminSecret = process.env.ADMIN_SECRET;
-
-  if (!adminSecret) {
-    return NextResponse.json(
-      { error: 'ADMIN_SECRET not configured' },
-      { status: 500 }
-    );
-  }
-
-  if (authHeader !== `Bearer ${adminSecret}`) {
+  // Verify authorization using timing-safe comparison
+  if (!isAdminAuthorized(request)) {
     return NextResponse.json(
       { error: 'Unauthorized' },
       { status: 401 }
+    );
+  }
+
+  // Rate limiting for admin endpoints
+  const clientId = getClientIdentifier(request);
+  const rateLimit = checkRateLimit(`admin-products-post:${clientId}`, RATE_LIMITS.GENERAL);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      {
+        status: 429,
+        headers: createRateLimitHeaders(rateLimit, RATE_LIMITS.GENERAL),
+      }
+    );
+  }
+
+  // Validate Content-Type
+  if (!isJsonContentType(request.headers.get('content-type'))) {
+    return NextResponse.json(
+      { error: 'Content-Type must be application/json' },
+      { status: 415 }
+    );
+  }
+
+  // Validate body size
+  const contentLength = parseInt(request.headers.get('content-length') || '0', 10);
+  if (contentLength > MAX_BODY_SIZES.PRODUCT) {
+    return NextResponse.json(
+      { error: 'Request body too large' },
+      { status: 413 }
     );
   }
 
@@ -75,6 +106,36 @@ export async function POST(request: NextRequest) {
     if (!product?.asin || !product?.name || !product?.amazonUrl) {
       return NextResponse.json(
         { error: 'Product asin, name, and amazonUrl are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate ASIN format
+    if (!isValidAsin(product.asin)) {
+      return NextResponse.json(
+        { error: 'Invalid ASIN format' },
+        { status: 400 }
+      );
+    }
+
+    // Validate slug formats
+    if (!isValidSlug(department.slug)) {
+      return NextResponse.json(
+        { error: 'Invalid department slug format' },
+        { status: 400 }
+      );
+    }
+    if (!isValidSlug(category.slug)) {
+      return NextResponse.json(
+        { error: 'Invalid category slug format' },
+        { status: 400 }
+      );
+    }
+
+    // Validate Amazon URL
+    if (!isValidAmazonUrl(product.amazonUrl)) {
+      return NextResponse.json(
+        { error: 'Invalid Amazon URL' },
         { status: 400 }
       );
     }
@@ -158,35 +219,81 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Admin product API error:', error);
+    logger.error('Admin product API error', error instanceof Error ? error : undefined);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to save product' },
+      { error: 'Failed to save product' },
       { status: 500 }
     );
   }
 }
 
-// Also support DELETE to remove all data (for reset)
+/**
+ * DELETE /api/admin/products
+ * Remove all data (for reset). Requires explicit confirmation.
+ *
+ * SECURITY: This is a destructive operation. Requires:
+ * 1. Admin authorization
+ * 2. Explicit confirmation header: X-Confirm-Delete: DELETE_ALL_DATA
+ * 3. Rate limited to prevent abuse
+ */
 export async function DELETE(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  const adminSecret = process.env.ADMIN_SECRET;
-
-  if (!adminSecret || authHeader !== `Bearer ${adminSecret}`) {
+  // Verify authorization using timing-safe comparison
+  if (!isAdminAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Rate limiting for admin endpoints (stricter for destructive operations)
+  const clientId = getClientIdentifier(request);
+  const rateLimit = checkRateLimit(`admin-products-delete:${clientId}`, {
+    windowMs: 60 * 60 * 1000, // 1 hour
+    maxRequests: 3, // Only 3 deletes per hour
+  });
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many delete requests. Please wait before trying again.' },
+      {
+        status: 429,
+        headers: createRateLimitHeaders(rateLimit, { windowMs: 60 * 60 * 1000, maxRequests: 3 }),
+      }
+    );
+  }
+
+  // Require explicit confirmation header to prevent accidental deletion
+  const confirmHeader = request.headers.get('x-confirm-delete');
+  if (confirmHeader !== 'DELETE_ALL_DATA') {
+    return NextResponse.json(
+      {
+        error: 'Confirmation required',
+        message: 'This operation will delete ALL data. Set header X-Confirm-Delete: DELETE_ALL_DATA to confirm.',
+      },
+      { status: 400 }
+    );
+  }
+
   try {
+    // Log the destructive action
+    logger.warn('Admin initiated full data deletion', {
+      clientId,
+      timestamp: new Date().toISOString(),
+    });
+
     // Delete all data (in correct order for foreign keys)
     await db()`DELETE FROM bestseller_rankings`;
     await db()`DELETE FROM products`;
     await db()`DELETE FROM categories`;
     await db()`DELETE FROM departments`;
 
-    return NextResponse.json({ success: true, message: 'All data deleted' });
+    logger.info('Full data deletion completed');
+
+    return NextResponse.json({
+      success: true,
+      message: 'All data deleted',
+      timestamp: new Date().toISOString(),
+    });
   } catch (error) {
-    console.error('Admin delete error:', error);
+    logger.error('Admin delete error', error instanceof Error ? error : undefined);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to delete data' },
+      { error: 'Failed to delete data' },
       { status: 500 }
     );
   }

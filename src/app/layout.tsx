@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import SkipLink from "@/components/layout/SkipLink";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import { OrganizationSchema, WebsiteSchema } from "@/components/seo/JsonLd";
+import { MobileNav } from "@/components/ui/MobileNav";
+import { ToastProvider } from "@/components/ui/ToastProvider";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://oneoptionstore.com';
@@ -61,10 +65,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <OrganizationSchema />
+        <WebsiteSchema />
+      </head>
       <body className="antialiased">
         <GoogleAnalytics />
         <SkipLink />
-        {children}
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
+        <MobileNav />
+        <ToastProvider />
       </body>
     </html>
   );

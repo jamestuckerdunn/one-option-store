@@ -6,6 +6,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ProductHero from '@/components/products/ProductHero';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
+import { BreadcrumbSchema, ProductSchema, FAQSchema } from '@/components/seo/JsonLd';
 
 export const revalidate = 300; // Revalidate every 5 minutes
 
@@ -51,8 +52,46 @@ export default async function CategoryPage({ params }: Props) {
   const product = await getBestsellerByCategory(category.id);
   const department = await getDepartmentBySlug(slug[0]);
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://oneoptionstore.com';
+  const categoryUrl = `${siteUrl}/category/${fullSlug}`;
+
+  const breadcrumbItems = [
+    { name: 'Home', url: siteUrl },
+    { name: 'Browse', url: `${siteUrl}/browse` },
+    ...(department ? [{ name: department.name, url: `${siteUrl}/department/${department.slug}` }] : []),
+    { name: category.name, url: categoryUrl },
+  ];
+
+  const faqItems = [
+    {
+      question: `What is the best ${category.name} to buy?`,
+      answer: product
+        ? `The current #1 bestseller in ${category.name} is ${product.name}. This product has earned the top spot based on Amazon sales data and customer reviews.`
+        : `We track Amazon's bestseller rankings to show you the #1 product in ${category.name}. Check back soon for the current top pick.`,
+    },
+    {
+      question: `How often are ${category.name} rankings updated?`,
+      answer: `Our ${category.name} rankings are updated regularly to reflect the current #1 bestseller on Amazon. We track changes to ensure you always see the top-rated product.`,
+    },
+  ];
+
   return (
     <div className="min-h-screen flex flex-col">
+      <BreadcrumbSchema items={breadcrumbItems} />
+      <FAQSchema items={faqItems} />
+      {product && (
+        <ProductSchema
+          name={product.name}
+          description={`#1 bestseller in ${category.name} on Amazon`}
+          image={product.image_url || undefined}
+          sku={product.asin}
+          url={`${siteUrl}/product/${product.asin}`}
+          price={product.price || undefined}
+          rating={product.rating || undefined}
+          reviewCount={product.review_count || undefined}
+          category={category.name}
+        />
+      )}
       <Header />
 
       <main className="flex-1">

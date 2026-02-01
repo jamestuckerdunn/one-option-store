@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { db } from './connection';
 
 /**
  * Database module for One Option Store.
@@ -6,41 +6,20 @@ import { neon } from '@neondatabase/serverless';
  * Uses Neon serverless PostgreSQL for database connectivity.
  */
 
-/** Department entity - top-level product categorization */
-export interface Department {
-  id: string;
-  name: string;
-  slug: string;
-  sort_order: number;
-}
+// Re-export types from schemas for backwards compatibility
+export type {
+  Department,
+  Category,
+  Product,
+  Bestseller,
+} from './schemas';
 
-/** Category entity - subdivision within a department */
-export interface Category {
-  id: string;
-  department_id: string;
-  name: string;
-  slug: string;
-  full_slug: string;
-}
-
-/** Product entity - Amazon product with affiliate link */
-export interface Product {
-  id: string;
-  asin: string;
-  name: string;
-  price: number | null;
-  image_url: string | null;
-  amazon_url: string;
-  rating: number | null;
-  review_count: number | null;
-}
-
-/** Bestseller entity - combines product, category, and department info */
-export interface Bestseller {
-  product: Product;
-  category: Category;
-  department: Department;
-}
+import type {
+  Department,
+  Category,
+  Product,
+  Bestseller,
+} from './schemas';
 
 type Row = Record<string, unknown>;
 
@@ -51,24 +30,11 @@ function rowToProduct(r: Row): Product {
     asin: String(r.asin),
     name: String(r.name),
     price: r.price != null ? Number(r.price) : null,
-    image_url: r.image_url as string | null,
+    image_url: r.image_url != null ? String(r.image_url) : null,
     amazon_url: String(r.amazon_url),
     rating: r.rating != null ? Number(r.rating) : null,
     review_count: r.review_count != null ? Number(r.review_count) : null,
   };
-}
-
-/** Lazy-initialized database connection */
-let sql: ReturnType<typeof neon> | null = null;
-
-function db() {
-  if (!sql) {
-    if (!process.env.DATABASE_URL) {
-      throw new Error('DATABASE_URL is not set');
-    }
-    sql = neon(process.env.DATABASE_URL);
-  }
-  return sql;
 }
 
 /**
@@ -275,10 +241,11 @@ export async function getBestsellersByDepartment(limit = 4): Promise<{ departmen
 
   for (const item of bestsellers) {
     const deptId = item.department.id;
-    if (!grouped.has(deptId)) {
-      grouped.set(deptId, { department: item.department, products: [] });
+    let group = grouped.get(deptId);
+    if (!group) {
+      group = { department: item.department, products: [] };
+      grouped.set(deptId, group);
     }
-    const group = grouped.get(deptId)!;
     if (group.products.length < limit) {
       group.products.push(item);
     }

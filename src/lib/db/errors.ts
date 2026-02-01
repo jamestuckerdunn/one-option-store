@@ -34,9 +34,19 @@ export class ConnectionError extends DatabaseError {
 
 /**
  * Wraps a database operation with error handling.
+ *
+ * Usage example:
+ * ```typescript
+ * const result = await withErrorHandling(
+ *   () => db()`SELECT * FROM users WHERE id = ${userId}`,
+ *   'Failed to fetch user'
+ * );
+ * ```
+ *
  * @param operation - The database operation to execute
  * @param errorMessage - Custom error message for failures
  * @returns The result of the operation
+ * @throws DatabaseError with the custom message if operation fails
  */
 export async function withErrorHandling<T>(
   operation: () => Promise<T>,
@@ -45,6 +55,7 @@ export async function withErrorHandling<T>(
   try {
     return await operation();
   } catch (error) {
+    // TODO: Replace with logger.error when logger is imported
     console.error(`Database error: ${errorMessage}`, error);
     throw new DatabaseError(errorMessage, undefined, error);
   }

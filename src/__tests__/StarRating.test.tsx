@@ -22,13 +22,13 @@ describe('StarRating', () => {
 
   it('fills correct number of stars based on rating', () => {
     const { container } = render(<StarRating rating={3.2} />);
-    const filledStars = container.querySelectorAll('.fill-black');
+    const filledStars = container.querySelectorAll('.fill-amber-400');
     expect(filledStars).toHaveLength(3);
   });
 
   it('rounds rating correctly', () => {
     const { container } = render(<StarRating rating={3.7} />);
-    const filledStars = container.querySelectorAll('.fill-black');
+    const filledStars = container.querySelectorAll('.fill-amber-400');
     expect(filledStars).toHaveLength(4);
   });
 });

@@ -7,7 +7,7 @@ export default function BrowseLoading() {
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <section className="bg-gray-50 border-b py-12">
           <div className="max-w-7xl mx-auto px-6">
             <Skeleton className="h-12 w-80 mb-3" />
@@ -19,7 +19,7 @@ export default function BrowseLoading() {
           <div className="max-w-7xl mx-auto px-6">
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 9 }).map((_, i) => (
-                <div key={i} className="p-6 rounded-2xl bg-white border">
+                <div key={`browse-skeleton-${i}`} className="p-6 rounded-2xl bg-white border">
                   <Skeleton className="h-7 w-3/4 mb-3" />
                   <Skeleton className="h-4 w-1/2 mb-4" />
                   <Skeleton className="h-4 w-24" />

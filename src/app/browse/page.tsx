@@ -65,7 +65,7 @@ export default async function BrowsePage() {
     <div className="min-h-screen flex flex-col bg-white">
       <Header />
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         {/* Hero Section */}
         <section className="relative overflow-hidden border-b border-gray-100">
           <div className="absolute inset-0 pattern-grid opacity-30" />
@@ -74,13 +74,13 @@ export default async function BrowsePage() {
               <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 gradient-text animate-slide-up">
                 Browse All Departments
               </h1>
-              <p className="text-xl text-gray-500 mb-8 animate-slide-up stagger-1" style={{ opacity: 0 }}>
+              <p className="text-xl text-gray-500 mb-8 animate-slide-up stagger-1">
                 Explore {departments.length} departments with {totalProducts.toLocaleString()} bestselling products.
                 Each one is the #1 choice in its category.
               </p>
 
               {/* Search Bar */}
-              <div className="max-w-lg animate-slide-up stagger-2" style={{ opacity: 0 }}>
+              <div className="max-w-lg animate-slide-up stagger-2">
                 <SearchBar size="large" placeholder="Search departments & products..." />
               </div>
             </div>

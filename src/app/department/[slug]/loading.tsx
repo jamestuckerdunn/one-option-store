@@ -7,7 +7,7 @@ export default function DepartmentLoading() {
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <nav className="bg-gray-50 border-b">
           <div className="max-w-7xl mx-auto px-6 py-4">
             <Skeleton className="h-4 w-48" />
@@ -38,7 +38,7 @@ export default function DepartmentLoading() {
             <Skeleton className="h-10 w-48 mb-8" />
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="p-6 rounded-2xl bg-white border">
+                <div key={`dept-skeleton-${i}`} className="p-6 rounded-2xl bg-white border">
                   <Skeleton className="h-6 w-3/4 mb-2" />
                   <Skeleton className="h-4 w-full mb-4" />
                   <Skeleton className="h-4 w-24" />

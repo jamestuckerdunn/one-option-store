@@ -18,9 +18,11 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
           <ol className="flex items-center gap-2 flex-wrap">
             {items.map((item, index) => {
               const isLast = index === items.length - 1;
+              // Use href + label combination for unique key, fallback to label-index for items without href
+              const uniqueKey = item.href ? `${item.href}-${item.label}` : `${item.label}-${index}`;
 
               return (
-                <li key={index} className="flex items-center gap-2">
+                <li key={uniqueKey} className="flex items-center gap-2">
                   {index > 0 && <ChevronRightIcon className="w-4 h-4 text-gray-300" aria-hidden="true" />}
                   {item.href && !isLast ? (
                     <Link href={item.href} className="hover:text-black transition-colors">

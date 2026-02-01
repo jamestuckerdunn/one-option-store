@@ -33,7 +33,7 @@ export default async function Home() {
     <div className="min-h-screen flex flex-col bg-white">
       <Header />
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         {/* Hero Section - Search Focused */}
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 pattern-grid opacity-30" />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
@@ -59,15 +59,16 @@ export function SearchBar({
   const router = useRouter();
 
   // Flatten results for keyboard navigation
-  const flatResults: SearchResult[] = results
-    ? [
-        ...results.products,
-        ...results.categories,
-        ...results.departments,
-      ]
-    : [];
+  const flatResults = useMemo<SearchResult[]>(() => {
+    if (!results) return [];
+    return [
+      ...results.products,
+      ...results.categories,
+      ...results.departments,
+    ];
+  }, [results]);
 
-  // Debounced search
+  // Debounced search with memory leak prevention
   useEffect(() => {
     if (query.trim().length < 2) {
       setResults(null);
@@ -75,24 +76,40 @@ export function SearchBar({
       return;
     }
 
+    // Track whether component is still mounted
+    let isMounted = true;
+
     const timer = setTimeout(async () => {
       setIsLoading(true);
       try {
         const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        // Check if component is still mounted before updating state
+        if (!isMounted) return;
+
         if (response.ok) {
           const data = await response.json();
+          // Double-check mount status after async operation
+          if (!isMounted) return;
           setResults(data);
           setIsOpen(true);
           setSelectedIndex(-1);
         }
       } catch (error) {
-        console.error('Search error:', error);
+        // Only log error if component is still mounted
+        if (isMounted) {
+          console.error('Search error:', error);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, [query]);
 
   // Click outside to close
@@ -213,7 +230,7 @@ export function SearchBar({
                       {product.image_url ? (
                         <Image
                           src={product.image_url}
-                          alt=""
+                          alt={product.name}
                           width={48}
                           height={48}
                           className="w-full h-full object-contain"

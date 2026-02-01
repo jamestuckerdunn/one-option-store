@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { NewsletterSignup } from '@/components/ui/NewsletterSignup';
 
 export default function Footer() {
   return (
@@ -46,25 +47,9 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* How It Works */}
+          {/* Newsletter Signup */}
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-4">
-              How It Works
-            </h3>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-start gap-3">
-                <span className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">1</span>
-                <span className="text-gray-400">We track Amazon&apos;s bestseller rankings daily</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">2</span>
-                <span className="text-gray-400">We curate only the #1 product in each category</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">3</span>
-                <span className="text-gray-400">You shop with confidence</span>
-              </li>
-            </ul>
+            <NewsletterSignup variant="footer" />
           </div>
         </div>
 

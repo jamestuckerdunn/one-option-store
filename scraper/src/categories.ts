@@ -1,5 +1,6 @@
 // Category tree discovery from Amazon Best Sellers
 import type { Page } from 'puppeteer';
+import * as fs from 'fs';
 import { randomDelay } from './scraper';
 
 export interface Category {
@@ -34,7 +35,8 @@ function extractSlugFromUrl(url: string): string {
 }
 
 // Extract the numeric category ID from URL (for deeper levels)
-function extractCategoryId(url: string): string | null {
+// Note: Currently unused but kept for potential future use with deeper category levels
+function _extractCategoryId(url: string): string | null {
   // Match /zgbs/department/123456 or /zgbs/department/123456/789012
   const match = url.match(/zgbs\/[^\/]+\/(\d+)/);
   return match ? match[1] : null;
@@ -148,7 +150,7 @@ export async function discoverSubcategories(
 
     // Extract level-2 subcategory links from sidebar
     // Amazon uses classes like zg-browse-item for category links
-    const level2Data = await page.evaluate((deptSlug: string) => {
+    const level2Data = await page.evaluate((_deptSlug: string) => {
       const results: { name: string; href: string }[] = [];
 
       // Modern Amazon selectors
@@ -371,13 +373,11 @@ export function saveCategoryList(
   categories: Category[],
   filePath: string
 ): void {
-  const fs = require('fs');
   fs.writeFileSync(filePath, JSON.stringify(categories, null, 2));
   console.log(`Saved ${categories.length} categories to ${filePath}`);
 }
 
 export function loadCategoryList(filePath: string): Category[] {
-  const fs = require('fs');
   if (!fs.existsSync(filePath)) {
     return [];
   }

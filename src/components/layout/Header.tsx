@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { SearchBar } from '@/components/ui/SearchBar';
 
 export default function Header() {
@@ -18,10 +18,22 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close search when menu opens
-  useEffect(() => {
-    if (menuOpen) setSearchOpen(false);
-  }, [menuOpen]);
+  // Handler to toggle menu and close search (memoized for performance)
+  const handleMenuToggle = useCallback(() => {
+    setMenuOpen((prev) => !prev);
+    setSearchOpen(false);
+  }, []);
+
+  // Handler to toggle search and close menu (memoized for performance)
+  const handleSearchToggle = useCallback(() => {
+    setSearchOpen((prev) => !prev);
+    setMenuOpen(false);
+  }, []);
+
+  // Handler to close menu when a link is clicked
+  const handleMenuClose = useCallback(() => {
+    setMenuOpen(false);
+  }, []);
 
   return (
     <header
@@ -78,10 +90,7 @@ export default function Header() {
             <button
               type="button"
               className="p-2 rounded-lg hover:bg-gray-50 transition"
-              onClick={() => {
-                setSearchOpen(!searchOpen);
-                setMenuOpen(false);
-              }}
+              onClick={handleSearchToggle}
               aria-label="Toggle search"
               aria-expanded={searchOpen}
             >
@@ -94,10 +103,7 @@ export default function Header() {
             <button
               type="button"
               className="p-2 -mr-2 rounded-lg hover:bg-gray-50 transition"
-              onClick={() => {
-                setMenuOpen(!menuOpen);
-                setSearchOpen(false);
-              }}
+              onClick={handleMenuToggle}
               aria-label="Toggle menu"
               aria-expanded={menuOpen}
             >
@@ -142,14 +148,14 @@ export default function Header() {
               <Link
                 href="/browse"
                 className="py-3 px-4 text-lg rounded-xl hover:bg-gray-50 transition"
-                onClick={() => setMenuOpen(false)}
+                onClick={handleMenuClose}
               >
                 Browse Departments
               </Link>
               <Link
                 href="/about"
                 className="py-3 px-4 text-lg rounded-xl hover:bg-gray-50 transition"
-                onClick={() => setMenuOpen(false)}
+                onClick={handleMenuClose}
               >
                 About
               </Link>
@@ -157,7 +163,7 @@ export default function Header() {
               <Link
                 href="/browse"
                 className="py-3 px-4 bg-black text-white text-lg font-medium rounded-xl text-center btn-press"
-                onClick={() => setMenuOpen(false)}
+                onClick={handleMenuClose}
               >
                 Shop Now
               </Link>

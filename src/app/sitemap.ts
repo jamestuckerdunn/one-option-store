@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { getDepartments, getBestsellers } from '@/lib/db';
+import { getPublishedBlogPosts } from '@/lib/db/blog';
 import { logger } from '@/lib/logger';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -18,6 +19,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/blog`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/about`,
@@ -69,6 +76,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           priority: 0.7,
         });
       }
+    }
+
+    // Blog pages
+    const blogPosts = await getPublishedBlogPosts({ limit: 100 });
+    for (const post of blogPosts) {
+      dynamicPages.push({
+        url: `${baseUrl}/blog/${post.slug}`,
+        lastModified: post.published_at || new Date(),
+        changeFrequency: 'monthly',
+        priority: 0.6,
+      });
     }
   } catch (error) {
     logger.error('Error generating sitemap', error instanceof Error ? error : undefined);

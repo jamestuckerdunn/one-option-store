@@ -9,6 +9,8 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { StarRating } from '@/components/ui/StarRating';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
+import { ProductSchema, BreadcrumbSchema } from '@/components/seo/JsonLd';
+import { TrustBadgeGroup } from '@/components/ui/TrustBadge';
 
 export const revalidate = 300; // Revalidate every 5 minutes
 
@@ -47,9 +49,29 @@ export default async function ProductPage({ params }: Props) {
   if (!product) notFound();
 
   const categories = await getProductCategories(product.id);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://oneoptionstore.com';
+  const productUrl = `${siteUrl}/product/${product.asin}`;
+
+  const breadcrumbItems = [
+    { name: 'Home', url: siteUrl },
+    { name: 'Products', url: `${siteUrl}/browse` },
+    { name: product.name.slice(0, 50), url: productUrl },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col">
+      <ProductSchema
+        name={product.name}
+        description={`#1 bestseller${categories.length > 0 ? ` in ${categories[0].name}` : ''} on Amazon`}
+        image={product.image_url || undefined}
+        sku={product.asin}
+        url={productUrl}
+        price={product.price || undefined}
+        rating={product.rating || undefined}
+        reviewCount={product.review_count || undefined}
+        category={categories[0]?.name}
+      />
+      <BreadcrumbSchema items={breadcrumbItems} />
       <Header />
 
       <main className="flex-1">
@@ -132,19 +154,12 @@ export default async function ProductPage({ params }: Props) {
                   </p>
                 </div>
 
-                <div className="mt-8 pt-8 border-t flex gap-6 text-gray-500 text-sm">
-                  <span className="flex items-center gap-2">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                    Verified #1
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Updated regularly
-                  </span>
+                <div className="mt-8 pt-8 border-t">
+                  <TrustBadgeGroup
+                    showVerified={true}
+                    showUpdated={true}
+                    reviewCount={product.review_count || undefined}
+                  />
                 </div>
 
                 <p className="mt-6 text-xs text-gray-400">ASIN: {product.asin}</p>
