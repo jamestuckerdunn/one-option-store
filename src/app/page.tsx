@@ -5,7 +5,7 @@ import { logger } from '@/lib/logger';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { StarRating } from '@/components/ui/StarRating';
-import { getAffiliateUrl } from '@/lib/affiliate';
+import { SearchBar } from '@/components/ui/SearchBar';
 
 export const revalidate = 300;
 
@@ -25,119 +25,76 @@ export default async function Home() {
     }),
   ]);
 
-  const hero = bestsellers[0];
-  const featuredProducts = bestsellers.slice(1, 7);
+  const featuredProducts = bestsellers.slice(0, 8);
   const activeDepartments = departments.filter((d) => d.productCount > 0);
+  const totalProducts = departments.reduce((sum, d) => sum + d.productCount, 0);
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Header />
 
       <main className="flex-1">
-        {/* Hero Section */}
-        {hero && (
-          <section className="relative overflow-hidden">
-            <div className="absolute inset-0 pattern-grid opacity-50" />
-            <div className="relative max-w-7xl mx-auto px-6 py-16 lg:py-24">
-              <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-                {/* Hero Content */}
-                <div className="animate-slide-up">
-                  <div className="inline-flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full text-sm font-medium mb-6 badge-shine">
-                    <span className="w-5 h-5 bg-white text-black rounded-full flex items-center justify-center text-xs font-bold">#1</span>
-                    <span>Bestseller in {hero.category.name}</span>
-                  </div>
+        {/* Hero Section - Search Focused */}
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0 pattern-grid opacity-30" />
+          <div className="relative max-w-4xl mx-auto px-6 py-20 lg:py-28 text-center">
+            <div className="animate-slide-up">
+              <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4 gradient-text">
+                The Best Choice Is No Choice
+              </h1>
+              <p className="text-lg sm:text-xl text-gray-500 mb-10 max-w-2xl mx-auto">
+                Stop comparing hundreds of options. We show you only the #1 bestseller in every Amazon category.
+              </p>
 
-                  <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 gradient-text">
-                    {hero.product.name}
-                  </h1>
+              {/* Large Hero Search Bar */}
+              <div className="max-w-xl mx-auto mb-8">
+                <SearchBar size="large" placeholder="Search for any product..." />
+              </div>
 
-                  {hero.product.rating !== null && (
-                    <div className="flex items-center gap-3 mb-6">
-                      <StarRating rating={hero.product.rating} size="md" />
-                      <span className="text-gray-500 text-sm">
-                        {hero.product.rating.toFixed(1)} ({hero.product.review_count?.toLocaleString()} reviews)
-                      </span>
-                    </div>
-                  )}
+              <p className="text-sm text-gray-400">
+                {totalProducts.toLocaleString()} bestselling products across {departments.length} departments
+              </p>
+            </div>
+          </div>
+        </section>
 
-                  {hero.product.price !== null && (
-                    <p className="text-4xl sm:text-5xl font-bold mb-8">${hero.product.price.toFixed(2)}</p>
-                  )}
-
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <a
-                      href={getAffiliateUrl(hero.product.amazon_url)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center px-8 py-4 bg-black text-white font-semibold rounded-xl hover:bg-gray-800 transition-all hover:scale-105"
-                    >
-                      Buy on Amazon
-                      <svg className="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                    </a>
-                    <Link
-                      href={`/product/${hero.product.asin}`}
-                      className="inline-flex items-center justify-center px-8 py-4 border-2 border-gray-200 font-semibold rounded-xl hover:border-black transition-all"
-                    >
-                      View Details
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Hero Image */}
-                <div className="relative animate-fade-in">
-                  <div className="aspect-square relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl shadow-2xl overflow-hidden">
-                    {hero.product.image_url ? (
-                      <Image
-                        src={hero.product.image_url}
-                        alt={hero.product.name}
-                        fill
-                        className="object-contain p-8"
-                        sizes="(max-width: 1024px) 100vw, 50vw"
-                        priority
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300">
-                        <svg className="w-24 h-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={0.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  {/* Decorative elements */}
-                  <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-blue-50 rounded-full -z-10" />
-                  <div className="absolute -top-4 -left-4 w-24 h-24 bg-gray-100 rounded-full -z-10" />
-                </div>
+        {/* Quick Department Pills */}
+        {activeDepartments.length > 0 && (
+          <section className="py-6 border-y border-gray-100 bg-gray-50/50">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                {activeDepartments.slice(0, 12).map((dept) => (
+                  <Link
+                    key={dept.id}
+                    href={`/department/${dept.slug}`}
+                    className="flex-shrink-0 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-600 hover:text-black hover:border-gray-300 hover:shadow-sm transition-all btn-press"
+                  >
+                    {dept.name}
+                  </Link>
+                ))}
+                <Link
+                  href="/browse"
+                  className="flex-shrink-0 px-4 py-2 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-all btn-press"
+                >
+                  View All
+                </Link>
               </div>
             </div>
           </section>
         )}
 
-        {/* Value Proposition */}
-        <section className="py-16 border-y border-gray-100">
-          <div className="max-w-4xl mx-auto px-6 text-center">
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold mb-4">
-              The Best Choice Is No Choice
-            </h2>
-            <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-              Stop comparing hundreds of options. We show you only the #1 bestseller in every Amazon category.
-            </p>
-          </div>
-        </section>
-
-        {/* Shop by Department - Mixed Grid */}
-        {activeDepartments.length > 0 && (
-          <section className="py-20">
+        {/* Trending Bestsellers */}
+        {featuredProducts.length > 0 && (
+          <section className="py-16 lg:py-20">
             <div className="max-w-7xl mx-auto px-6">
-              <div className="flex items-end justify-between mb-12">
+              <div className="flex items-end justify-between mb-10">
                 <div>
-                  <h2 className="font-serif text-3xl sm:text-4xl font-bold">Shop by Department</h2>
-                  <p className="text-gray-500 mt-2">{activeDepartments.length} departments with top products</p>
+                  <h2 className="font-serif text-3xl sm:text-4xl font-bold">Trending Bestsellers</h2>
+                  <p className="text-gray-500 mt-2">Top-rated products people are buying now</p>
                 </div>
                 <Link
                   href="/browse"
-                  className="hidden sm:flex items-center text-sm font-medium text-gray-600 hover:text-black transition"
+                  className="hidden sm:flex items-center text-sm font-medium text-gray-600 hover:text-black transition link-animate"
                 >
                   View all
                   <svg className="ml-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -146,15 +103,90 @@ export default async function Home() {
                 </Link>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {activeDepartments.slice(0, 8).map((dept, index) => (
+              {/* Clean Product Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6 stagger-fade">
+                {featuredProducts.map((item) => (
+                  <Link
+                    key={item.product.id}
+                    href={`/product/${item.product.asin}`}
+                    className="group"
+                  >
+                    <article className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 card-hover">
+                      <div className="aspect-square relative bg-gradient-to-br from-gray-50 to-white image-container">
+                        <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 bg-black text-white px-2.5 py-1 rounded-full text-xs font-semibold">
+                          #1
+                        </div>
+                        {item.product.image_url ? (
+                          <Image
+                            src={item.product.image_url}
+                            alt={item.product.name}
+                            fill
+                            className="object-contain p-6"
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-200">
+                            <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={0.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="p-4">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1.5">{item.category.name}</p>
+                        <h3 className="font-serif text-sm font-semibold leading-snug line-clamp-2 mb-3 group-hover:text-gray-600 transition">
+                          {item.product.name}
+                        </h3>
+
+                        <div className="flex items-end justify-between">
+                          {item.product.price !== null ? (
+                            <span className="text-lg font-bold">${item.product.price.toFixed(2)}</span>
+                          ) : (
+                            <span className="text-xs text-gray-400">Check price</span>
+                          )}
+
+                          {item.product.rating !== null && (
+                            <StarRating rating={item.product.rating} size="sm" />
+                          )}
+                        </div>
+                      </div>
+                    </article>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Browse by Department */}
+        {activeDepartments.length > 0 && (
+          <section className="py-16 lg:py-20 bg-gray-50">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="flex items-end justify-between mb-10">
+                <div>
+                  <h2 className="font-serif text-3xl sm:text-4xl font-bold">Browse by Department</h2>
+                  <p className="text-gray-500 mt-2">{activeDepartments.length} departments with top products</p>
+                </div>
+                <Link
+                  href="/browse"
+                  className="hidden sm:flex items-center text-sm font-medium text-gray-600 hover:text-black transition link-animate"
+                >
+                  View all
+                  <svg className="ml-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 stagger-fade">
+                {activeDepartments.slice(0, 8).map((dept) => (
                   <Link
                     key={dept.id}
                     href={`/department/${dept.slug}`}
-                    className={`group relative p-6 rounded-2xl bg-gradient-to-br from-gray-50 to-white border border-gray-100 hover:border-gray-200 card-hover animate-slide-up stagger-${Math.min(index + 1, 6)}`}
-                    style={{ opacity: 0 }}
+                    className="group relative p-6 rounded-2xl bg-white border border-gray-100 hover:border-gray-200 card-hover"
                   >
-                    <div className="flex flex-col h-full">
+                    <div className="flex flex-col h-full min-h-[120px]">
                       <h3 className="font-serif text-lg font-bold mb-1 group-hover:text-gray-700 transition">
                         {dept.name}
                       </h3>
@@ -171,92 +203,27 @@ export default async function Home() {
                   </Link>
                 ))}
               </div>
-            </div>
-          </section>
-        )}
 
-        {/* Featured Products - Mixed Grid Layout */}
-        {featuredProducts.length > 0 && (
-          <section className="py-20 bg-gray-50">
-            <div className="max-w-7xl mx-auto px-6">
-              <div className="flex items-end justify-between mb-12">
-                <div>
-                  <h2 className="font-serif text-3xl sm:text-4xl font-bold">Featured Bestsellers</h2>
-                  <p className="text-gray-500 mt-2">Hand-picked top products</p>
-                </div>
-              </div>
-
-              {/* Bento-style mixed grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {featuredProducts.map((item, index) => (
+              {activeDepartments.length > 8 && (
+                <div className="text-center mt-8">
                   <Link
-                    key={item.product.id}
-                    href={`/product/${item.product.asin}`}
-                    className={`group relative bg-white rounded-2xl overflow-hidden card-hover animate-slide-up stagger-${Math.min(index + 1, 6)} ${index === 0 ? 'md:col-span-2 md:row-span-2' : ''}`}
-                    style={{ opacity: 0 }}
+                    href="/browse"
+                    className="inline-flex items-center px-6 py-3 border-2 border-gray-200 font-medium rounded-xl hover:border-black transition-all btn-press"
                   >
-                    <article className="h-full flex flex-col">
-                      <div className={`relative bg-gradient-to-br from-gray-50 to-white ${index === 0 ? 'aspect-[4/3]' : 'aspect-square'}`}>
-                        <div className="absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 bg-black text-white px-3 py-1.5 rounded-full text-xs font-semibold">
-                          <span>#1</span>
-                        </div>
-                        {item.product.image_url ? (
-                          <Image
-                            src={item.product.image_url}
-                            alt={item.product.name}
-                            fill
-                            className="object-contain p-6"
-                            sizes={index === 0 ? '(max-width: 768px) 100vw, 66vw' : '(max-width: 768px) 100vw, 33vw'}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-200">
-                            <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={0.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="p-5 flex-1 flex flex-col">
-                        <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">{item.category.name}</p>
-                        <h3 className={`font-serif font-semibold leading-snug line-clamp-2 mb-3 group-hover:text-gray-600 transition ${index === 0 ? 'text-xl' : ''}`}>
-                          {item.product.name}
-                        </h3>
-
-                        <div className="mt-auto flex items-end justify-between">
-                          {item.product.price !== null ? (
-                            <span className={`font-bold ${index === 0 ? 'text-2xl' : 'text-xl'}`}>
-                              ${item.product.price.toFixed(2)}
-                            </span>
-                          ) : (
-                            <span className="text-sm text-gray-400">Check price</span>
-                          )}
-
-                          {item.product.rating !== null && (
-                            <div className="text-right">
-                              <StarRating rating={item.product.rating} size="sm" />
-                              {item.product.review_count !== null && (
-                                <span className="text-xs text-gray-400 block">
-                                  {item.product.review_count >= 1000
-                                    ? `${(item.product.review_count / 1000).toFixed(0)}k`
-                                    : item.product.review_count} reviews
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </article>
+                    View All {activeDepartments.length} Departments
+                    <svg className="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </Link>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
           </section>
         )}
 
-        {/* Products by Department */}
-        {departmentProducts.slice(0, 3).map((group, groupIndex) => (
-          <section key={group.department.id} className={`py-20 ${groupIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+        {/* Featured Department Showcase */}
+        {departmentProducts.slice(0, 2).map((group, groupIndex) => (
+          <section key={group.department.id} className={`py-16 lg:py-20 ${groupIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
             <div className="max-w-7xl mx-auto px-6">
               <div className="flex items-end justify-between mb-10">
                 <div>
@@ -265,7 +232,7 @@ export default async function Home() {
                 </div>
                 <Link
                   href={`/department/${group.department.slug}`}
-                  className="hidden sm:flex items-center text-sm font-medium text-gray-600 hover:text-black transition"
+                  className="hidden sm:flex items-center text-sm font-medium text-gray-600 hover:text-black transition link-animate"
                 >
                   See all
                   <svg className="ml-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -274,7 +241,7 @@ export default async function Home() {
                 </Link>
               </div>
 
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 stagger-fade">
                 {group.products.map((item) => (
                   <Link
                     key={item.product.id}
@@ -282,7 +249,7 @@ export default async function Home() {
                     className="group"
                   >
                     <article className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 card-hover">
-                      <div className="aspect-square relative bg-gradient-to-br from-gray-50 to-white">
+                      <div className="aspect-square relative bg-gradient-to-br from-gray-50 to-white image-container">
                         <div className="absolute top-3 left-3 z-10 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-[10px] font-bold">
                           #1
                         </div>
@@ -329,21 +296,21 @@ export default async function Home() {
           </section>
         ))}
 
-        {/* CTA Section */}
-        <section className="relative py-24 bg-black text-white overflow-hidden">
+        {/* Final CTA Section */}
+        <section className="relative py-20 lg:py-24 bg-black text-white overflow-hidden">
           <div className="absolute inset-0 opacity-10">
             <div className="pattern-grid" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)' }} />
           </div>
-          <div className="relative max-w-4xl mx-auto px-6 text-center">
-            <h2 className="font-serif text-4xl sm:text-5xl font-bold mb-6">
-              Explore All {departments.length} Departments
+          <div className="relative max-w-3xl mx-auto px-6 text-center">
+            <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+              Find Your Perfect Product
             </h2>
             <p className="text-gray-300 text-lg mb-10 max-w-2xl mx-auto">
-              Browse every category and discover the #1 bestseller. No endless scrolling, no decision fatigue.
+              Browse {totalProducts.toLocaleString()} bestselling products across {departments.length} departments. No endless scrolling, no decision fatigue.
             </p>
             <Link
               href="/browse"
-              className="inline-flex items-center px-10 py-5 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-all hover:scale-105"
+              className="inline-flex items-center px-8 py-4 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-all btn-press"
             >
               Browse All Departments
               <svg className="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

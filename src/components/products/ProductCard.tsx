@@ -29,7 +29,8 @@ export default function ProductCard({
   return (
     <Link href={`/product/${asin}`} className="group block">
       <article className="rounded-2xl bg-white border border-gray-100 hover:border-gray-200 overflow-hidden card-hover">
-        <div className={`relative bg-gradient-to-br from-gray-50 to-white ${isCompact ? 'aspect-[4/3]' : 'aspect-square'}`}>
+        {/* Image container with zoom effect */}
+        <div className={`relative bg-gradient-to-br from-gray-50 to-white overflow-hidden ${isCompact ? 'aspect-[4/3]' : 'aspect-square'}`}>
           <div className={`absolute z-10 bg-black text-white rounded-full flex items-center justify-center font-bold ${isCompact ? 'top-2 left-2 w-6 h-6 text-[10px]' : 'top-3 left-3 w-7 h-7 text-xs'}`}>
             #1
           </div>
@@ -38,7 +39,7 @@ export default function ProductCard({
               src={imageUrl}
               alt={name}
               fill
-              className={`object-contain ${isCompact ? 'p-4' : 'p-6'}`}
+              className={`object-contain image-zoom ${isCompact ? 'p-4' : 'p-6'}`}
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             />
           ) : (

@@ -14,11 +14,11 @@ export function StarRating({ rating, size = 'md' }: StarRatingProps) {
   const roundedRating = Math.round(rating);
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((star) => (
         <svg
           key={star}
-          className={`${sizeClass} ${star <= roundedRating ? 'fill-black' : 'fill-gray-200'}`}
+          className={`${sizeClass} ${star <= roundedRating ? 'fill-amber-400' : 'fill-gray-200'}`}
           viewBox="0 0 20 20"
           aria-hidden="true"
         >

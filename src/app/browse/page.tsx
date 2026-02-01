@@ -4,6 +4,7 @@ import { getDepartmentsWithCount, getBestsellersByDepartment } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { SearchBar } from '@/components/ui/SearchBar';
 
 export const revalidate = 3600;
 
@@ -58,6 +59,7 @@ export default async function BrowsePage() {
   }
 
   const totalProducts = departments.reduce((sum, d) => sum + d.productCount, 0);
+  const activeDepartments = departments.filter((d) => d.productCount > 0);
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -67,43 +69,46 @@ export default async function BrowsePage() {
         {/* Hero Section */}
         <section className="relative overflow-hidden border-b border-gray-100">
           <div className="absolute inset-0 pattern-grid opacity-30" />
-          <div className="relative max-w-7xl mx-auto px-6 py-20">
+          <div className="relative max-w-7xl mx-auto px-6 py-16 lg:py-20">
             <div className="max-w-3xl">
-              <h1 className="font-serif text-5xl sm:text-6xl font-bold mb-6 gradient-text animate-slide-up">
+              <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 gradient-text animate-slide-up">
                 Browse All Departments
               </h1>
-              <p className="text-xl text-gray-500 animate-slide-up stagger-1" style={{ opacity: 0 }}>
+              <p className="text-xl text-gray-500 mb-8 animate-slide-up stagger-1" style={{ opacity: 0 }}>
                 Explore {departments.length} departments with {totalProducts.toLocaleString()} bestselling products.
                 Each one is the #1 choice in its category.
               </p>
+
+              {/* Search Bar */}
+              <div className="max-w-lg animate-slide-up stagger-2" style={{ opacity: 0 }}>
+                <SearchBar size="large" placeholder="Search departments & products..." />
+              </div>
             </div>
           </div>
         </section>
 
         {/* Departments Grid */}
-        <section className="py-16">
+        <section className="py-12 lg:py-16">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {departments.map((dept, index) => {
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 stagger-fade">
+              {activeDepartments.map((dept) => {
                 const productImage = deptImageMap.get(dept.id);
-                const hasProducts = dept.productCount > 0;
 
                 return (
                   <Link
                     key={dept.id}
                     href={`/department/${dept.slug}`}
-                    className={`group relative rounded-2xl overflow-hidden card-hover animate-slide-up stagger-${Math.min((index % 6) + 1, 6)} ${!hasProducts ? 'opacity-60' : ''}`}
-                    style={{ opacity: 0 }}
+                    className="group relative rounded-2xl overflow-hidden card-hover"
                   >
                     <article className="relative h-full">
                       {/* Background with product preview or gradient */}
-                      <div className="relative aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-50">
+                      <div className="relative aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-50 image-container">
                         {productImage && (
                           <Image
                             src={productImage}
                             alt=""
                             fill
-                            className="object-contain p-8 opacity-30 group-hover:opacity-40 group-hover:scale-105 transition-all duration-500"
+                            className="object-contain p-8 opacity-30 group-hover:opacity-40 transition-opacity duration-500"
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           />
                         )}

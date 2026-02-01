@@ -29,17 +29,17 @@ export default function Footer() {
             </h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/" className="text-gray-400 hover:text-white transition text-sm">
+                <Link href="/" className="relative inline-block text-gray-400 hover:text-white transition text-sm link-animate">
                   Home
                 </Link>
               </li>
               <li>
-                <Link href="/browse" className="text-gray-400 hover:text-white transition text-sm">
+                <Link href="/browse" className="relative inline-block text-gray-400 hover:text-white transition text-sm link-animate">
                   Browse Departments
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-gray-400 hover:text-white transition text-sm">
+                <Link href="/about" className="relative inline-block text-gray-400 hover:text-white transition text-sm link-animate">
                   About Us
                 </Link>
               </li>

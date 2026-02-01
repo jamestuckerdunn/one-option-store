@@ -309,3 +309,109 @@ export async function getDepartmentsWithCount(): Promise<(Department & { product
     productCount: Number(r.product_count || 0),
   }));
 }
+
+/** Search result types */
+export interface SearchResultProduct {
+  type: 'product';
+  asin: string;
+  name: string;
+  price: number | null;
+  image_url: string | null;
+  rating: number | null;
+}
+
+export interface SearchResultCategory {
+  type: 'category';
+  name: string;
+  full_slug: string;
+  department_name: string;
+  product_count: number;
+}
+
+export interface SearchResultDepartment {
+  type: 'department';
+  name: string;
+  slug: string;
+  product_count: number;
+}
+
+export interface SearchResults {
+  products: SearchResultProduct[];
+  categories: SearchResultCategory[];
+  departments: SearchResultDepartment[];
+}
+
+/**
+ * Searches products, categories, and departments by query string.
+ * Uses PostgreSQL ILIKE for case-insensitive text matching.
+ * @param query - The search query string
+ * @param limit - Maximum number of results per type (default 5)
+ * @returns Object with products, categories, and departments arrays
+ */
+export async function searchProducts(query: string, limit = 5): Promise<SearchResults> {
+  const searchPattern = `%${query}%`;
+
+  // Search products that are current bestsellers
+  const productsResult = await db()`
+    SELECT DISTINCT p.asin, p.name, p.price, p.image_url, p.rating
+    FROM products p
+    JOIN bestseller_rankings br ON br.product_id = p.id AND br.is_current = true
+    WHERE p.name ILIKE ${searchPattern}
+    ORDER BY p.rating DESC NULLS LAST
+    LIMIT ${limit}
+  `;
+
+  // Search categories with product count
+  const categoriesResult = await db()`
+    SELECT c.name, c.full_slug, d.name as department_name,
+           COUNT(DISTINCT br.product_id) as product_count
+    FROM categories c
+    JOIN departments d ON c.department_id = d.id
+    LEFT JOIN bestseller_rankings br ON br.category_id = c.id AND br.is_current = true
+    WHERE c.name ILIKE ${searchPattern}
+    GROUP BY c.id, c.name, c.full_slug, d.name
+    HAVING COUNT(DISTINCT br.product_id) > 0
+    ORDER BY COUNT(DISTINCT br.product_id) DESC
+    LIMIT ${limit}
+  `;
+
+  // Search departments with product count
+  const departmentsResult = await db()`
+    SELECT d.name, d.slug,
+           COUNT(DISTINCT br.product_id) as product_count
+    FROM departments d
+    LEFT JOIN categories c ON c.department_id = d.id
+    LEFT JOIN bestseller_rankings br ON br.category_id = c.id AND br.is_current = true
+    WHERE d.name ILIKE ${searchPattern}
+    GROUP BY d.id, d.name, d.slug
+    HAVING COUNT(DISTINCT br.product_id) > 0
+    ORDER BY COUNT(DISTINCT br.product_id) DESC
+    LIMIT ${limit}
+  `;
+
+  const products = (productsResult as unknown as Row[]).map((r) => ({
+    type: 'product' as const,
+    asin: String(r.asin),
+    name: String(r.name),
+    price: r.price != null ? Number(r.price) : null,
+    image_url: r.image_url as string | null,
+    rating: r.rating != null ? Number(r.rating) : null,
+  }));
+
+  const categories = (categoriesResult as unknown as Row[]).map((r) => ({
+    type: 'category' as const,
+    name: String(r.name),
+    full_slug: String(r.full_slug),
+    department_name: String(r.department_name),
+    product_count: Number(r.product_count || 0),
+  }));
+
+  const departments = (departmentsResult as unknown as Row[]).map((r) => ({
+    type: 'department' as const,
+    name: String(r.name),
+    slug: String(r.slug),
+    product_count: Number(r.product_count || 0),
+  }));
+
+  return { products, categories, departments };
+}
