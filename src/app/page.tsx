@@ -11,11 +11,11 @@ export const revalidate = 300;
 
 export default async function Home() {
   const [bestsellers, departments, departmentProducts] = await Promise.all([
-    getBestsellers().catch((error) => {
+    getBestsellers(50).catch((error) => {
       logger.error('Failed to fetch bestsellers', error);
       return [];
     }),
-    getDepartmentsWithCount().catch((error) => {
+    getDepartmentsWithCount(20).catch((error) => {
       logger.error('Failed to fetch departments', error);
       return [];
     }),

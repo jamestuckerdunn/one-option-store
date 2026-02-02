@@ -114,10 +114,11 @@ export async function getProductByAsin(asin: string): Promise<Product | null> {
 }
 
 /**
- * Retrieves all current bestsellers with their product, category, and department info.
+ * Retrieves current bestsellers with their product, category, and department info.
+ * @param limit - Optional maximum number of results to return (default: no limit)
  * @returns Array of Bestseller objects ordered by department sort_order and category name
  */
-export async function getBestsellers(): Promise<Bestseller[]> {
+export async function getBestsellers(limit?: number): Promise<Bestseller[]> {
   const result = await db()`
     SELECT
       p.id, p.asin, p.name, p.price, p.image_url, p.amazon_url, p.rating, p.review_count,
@@ -129,6 +130,7 @@ export async function getBestsellers(): Promise<Bestseller[]> {
     JOIN departments d ON c.department_id = d.id
     WHERE br.is_current = true
     ORDER BY d.sort_order, c.name
+    ${limit ? db()`LIMIT ${limit}` : db()``}
   `;
   const rows = result as unknown as Row[];
 
@@ -228,27 +230,73 @@ export async function getProductCategories(productId: string): Promise<Category[
   return result as unknown as Category[];
 }
 
+/** GroupedBestsellers type for getBestsellersByDepartment return */
+export type GroupedBestsellers = { department: Department; products: Bestseller[] };
+
 /**
  * Retrieves bestsellers grouped by department with product count per department.
- * @param limit - Maximum number of products per department
+ * Uses SQL window functions for efficient limiting at the database level.
+ * @param limit - Maximum number of products per department (default: 4)
  * @returns Array of departments with their bestseller products
  */
-export async function getBestsellersByDepartment(limit = 4): Promise<{ department: Department; products: Bestseller[] }[]> {
-  const bestsellers = await getBestsellers();
+export async function getBestsellersByDepartment(limit = 4): Promise<GroupedBestsellers[]> {
+  const result = await db()`
+    WITH ranked_bestsellers AS (
+      SELECT
+        p.id, p.asin, p.name, p.price, p.image_url, p.amazon_url, p.rating, p.review_count,
+        c.id as cat_id, c.department_id, c.name as cat_name, c.slug as cat_slug, c.full_slug,
+        d.id as dept_id, d.name as dept_name, d.slug as dept_slug, d.sort_order,
+        ROW_NUMBER() OVER (PARTITION BY d.id ORDER BY c.name) as row_num
+      FROM bestseller_rankings br
+      JOIN products p ON br.product_id = p.id
+      JOIN categories c ON br.category_id = c.id
+      JOIN departments d ON c.department_id = d.id
+      WHERE br.is_current = true
+    )
+    SELECT * FROM ranked_bestsellers
+    WHERE row_num <= ${limit}
+    ORDER BY sort_order, cat_name
+  `;
+  const rows = result as unknown as Row[];
 
-  // Group by department
-  const grouped = new Map<string, { department: Department; products: Bestseller[] }>();
+  // Group by department in JavaScript (but now with limited data from SQL)
+  const grouped = new Map<string, GroupedBestsellers>();
 
-  for (const item of bestsellers) {
-    const deptId = item.department.id;
+  for (const r of rows) {
+    const deptId = String(r.dept_id);
     let group = grouped.get(deptId);
     if (!group) {
-      group = { department: item.department, products: [] };
+      group = {
+        department: {
+          id: deptId,
+          name: String(r.dept_name),
+          slug: String(r.dept_slug),
+          sort_order: Number(r.sort_order),
+        },
+        products: [],
+      };
       grouped.set(deptId, group);
     }
-    if (group.products.length < limit) {
-      group.products.push(item);
-    }
+    group.products.push({
+      product: {
+        id: String(r.id),
+        asin: String(r.asin),
+        name: String(r.name),
+        price: r.price != null ? Number(r.price) : null,
+        image_url: r.image_url as string | null,
+        amazon_url: String(r.amazon_url),
+        rating: r.rating != null ? Number(r.rating) : null,
+        review_count: r.review_count != null ? Number(r.review_count) : null,
+      },
+      category: {
+        id: String(r.cat_id),
+        department_id: String(r.department_id),
+        name: String(r.cat_name),
+        slug: String(r.cat_slug),
+        full_slug: String(r.full_slug),
+      },
+      department: group.department,
+    });
   }
 
   return Array.from(grouped.values()).sort((a, b) => a.department.sort_order - b.department.sort_order);
@@ -256,9 +304,10 @@ export async function getBestsellersByDepartment(limit = 4): Promise<{ departmen
 
 /**
  * Retrieves departments with their product count.
+ * @param limit - Optional maximum number of departments to return (default: no limit)
  * @returns Array of departments with bestseller count
  */
-export async function getDepartmentsWithCount(): Promise<(Department & { productCount: number })[]> {
+export async function getDepartmentsWithCount(limit?: number): Promise<(Department & { productCount: number })[]> {
   const result = await db()`
     SELECT d.id, d.name, d.slug, d.sort_order, COUNT(DISTINCT br.product_id) as product_count
     FROM departments d
@@ -266,6 +315,7 @@ export async function getDepartmentsWithCount(): Promise<(Department & { product
     LEFT JOIN bestseller_rankings br ON br.category_id = c.id AND br.is_current = true
     GROUP BY d.id, d.name, d.slug, d.sort_order
     ORDER BY d.sort_order, d.name
+    ${limit ? db()`LIMIT ${limit}` : db()``}
   `;
   const rows = result as unknown as Row[];
   return rows.map((r) => ({

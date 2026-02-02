@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { getProductByAsin, getProductCategories } from '@/lib/db';
+import { getProductByAsin, getProductCategories, getBestsellers } from '@/lib/db';
 import { isValidAsin } from '@/lib/validation';
 import { getAffiliateUrl } from '@/lib/affiliate';
 import Header from '@/components/layout/Header';
@@ -13,6 +13,21 @@ import { ProductSchema, BreadcrumbSchema } from '@/components/seo/JsonLd';
 import { TrustBadgeGroup } from '@/components/ui/TrustBadge';
 
 export const revalidate = 300; // Revalidate every 5 minutes
+
+/**
+ * Pre-generate static pages for the top bestselling products.
+ * This ensures popular products are cached at build time and don't timeout on first request.
+ */
+export async function generateStaticParams() {
+  try {
+    const bestsellers = await getBestsellers(100);
+    return bestsellers.map((b) => ({ asin: b.product.asin }));
+  } catch {
+    // If the database query fails during build, return empty array
+    // Pages will be generated on-demand instead
+    return [];
+  }
+}
 
 interface Props {
   params: Promise<{ asin: string }>;
